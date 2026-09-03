@@ -4,6 +4,7 @@ import {
   Check,
   Clipboard,
   Disc3,
+  Lightbulb,
   LoaderCircle,
   Music2,
   RotateCcw,
@@ -29,6 +30,24 @@ type FormState = {
   hookLines: number;
   startsWith: StartMode;
 };
+
+type ThemeIdea = {
+  name: string;
+  theme: string;
+  angle: string;
+};
+
+const directionOptions = [
+  "Open",
+  "Hard-hitting",
+  "Melodic",
+  "Reflective",
+  "Victory",
+  "Come-up",
+  "Street faith",
+  "Dark & focused",
+  "Smooth",
+];
 
 const initialState: FormState = {
   title: "Locked In",
@@ -111,6 +130,13 @@ export default function Home() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const [direction, setDirection] = useState("Open");
+  const [soundNote, setSoundNote] = useState("");
+  const [themes, setThemes] = useState<ThemeIdea[]>([]);
+  const [themeLoading, setThemeLoading] = useState(false);
+  const [themeError, setThemeError] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState<number | null>(null);
+
   const structure = useMemo(() => getStructure(form), [form]);
   const totalLines = useMemo(() => {
     return (
@@ -124,6 +150,44 @@ export default function Home() {
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
+
+  async function generateThemes() {
+    if (!form.title.trim()) {
+      setThemeError("Enter a title before generating themes.");
+      return;
+    }
+
+    setThemeLoading(true);
+    setThemeError("");
+    setSelectedTheme(null);
+
+    try {
+      const response = await fetch("/api/themes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          direction,
+          soundNote,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Theme generation failed.");
+
+      setThemes(data.themes || []);
+      setModel(data.model || model);
+    } catch (err) {
+      setThemeError(err instanceof Error ? err.message : "Theme generation failed.");
+    } finally {
+      setThemeLoading(false);
+    }
+  }
+
+  function chooseTheme(theme: ThemeIdea, index: number) {
+    update("theme", theme.theme);
+    setSelectedTheme(index);
+  }
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
@@ -180,18 +244,91 @@ export default function Home() {
             <Music2 size={20} />
           </div>
 
-          <div className="field-grid two">
-            <label className="field">
+          <section className="theme-finder">
+            <div className="theme-finder-heading">
+              <div className="theme-finder-icon"><Lightbulb size={18} /></div>
+              <div>
+                <p className="kicker">Theme Finder</p>
+                <h3>Start with the title in your head</h3>
+                <p>Get five song directions, pick one, or regenerate a new set.</p>
+              </div>
+            </div>
+
+            <label className="field theme-title-field">
               <span>Title</span>
-              <input value={form.title} onChange={(e) => update("title", e.target.value)} placeholder="Locked In" required />
+              <input
+                value={form.title}
+                onChange={(e) => {
+                  update("title", e.target.value);
+                  setSelectedTheme(null);
+                }}
+                placeholder="Locked In"
+                required
+              />
             </label>
+
+            <div className="field">
+              <span>How should it feel? <small>Optional</small></span>
+              <div className="direction-pills">
+                {directionOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={direction === option ? "active" : ""}
+                    onClick={() => setDirection(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="field">
+              <span>Describe the sound <small>Optional</small></span>
+              <textarea
+                rows={2}
+                value={soundNote}
+                onChange={(e) => setSoundNote(e.target.value)}
+                placeholder="Example: victorious but calm, late-night melodic feel, still hard when the drums land"
+              />
+            </label>
+
+            <button className="theme-generate" type="button" onClick={generateThemes} disabled={themeLoading}>
+              {themeLoading ? <LoaderCircle className="spin" size={17} /> : <Sparkles size={17} />}
+              {themeLoading ? "Finding themes..." : themes.length ? "Regenerate 5 themes" : "Generate 5 themes"}
+            </button>
+
+            {themeError && <p className="theme-error">{themeError}</p>}
+
+            {themes.length > 0 && (
+              <div className="theme-results">
+                {themes.map((theme, index) => (
+                  <button
+                    key={`${theme.name}-${index}`}
+                    className={`theme-option ${selectedTheme === index ? "selected" : ""}`}
+                    type="button"
+                    onClick={() => chooseTheme(theme, index)}
+                  >
+                    <div className="theme-option-top">
+                      <span className="theme-number">0{index + 1}</span>
+                      <strong>{theme.name}</strong>
+                      {selectedTheme === index && <Check size={15} />}
+                    </div>
+                    <p>{theme.theme}</p>
+                    {theme.angle && <small>{theme.angle}</small>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <div className="divider" />
+
+          <div className="field-grid two">
             <label className="field">
               <span>Key</span>
               <input value={form.songKey} onChange={(e) => update("songKey", e.target.value)} placeholder="Bm" required />
             </label>
-          </div>
-
-          <div className="field-grid two">
             <label className="field">
               <span>Tempo</span>
               <div className="suffix-field">
@@ -199,18 +336,28 @@ export default function Home() {
                 <span>BPM</span>
               </div>
             </label>
-            <div className="field">
-              <span>Starts with</span>
-              <div className="segmented">
-                <button type="button" className={form.startsWith === "hook" ? "active" : ""} onClick={() => update("startsWith", "hook")}>Hook</button>
-                <button type="button" className={form.startsWith === "verse" ? "active" : ""} onClick={() => update("startsWith", "verse")}>Verse</button>
-              </div>
+          </div>
+
+          <div className="field">
+            <span>Starts with</span>
+            <div className="segmented">
+              <button type="button" className={form.startsWith === "hook" ? "active" : ""} onClick={() => update("startsWith", "hook")}>Hook</button>
+              <button type="button" className={form.startsWith === "verse" ? "active" : ""} onClick={() => update("startsWith", "verse")}>Verse</button>
             </div>
           </div>
 
           <label className="field">
             <span>Theme</span>
-            <textarea rows={4} value={form.theme} onChange={(e) => update("theme", e.target.value)} placeholder="What is the song about?" required />
+            <textarea
+              rows={4}
+              value={form.theme}
+              onChange={(e) => {
+                update("theme", e.target.value);
+                setSelectedTheme(null);
+              }}
+              placeholder="Pick a generated theme or write your own."
+              required
+            />
           </label>
 
           <div className="divider" />
@@ -292,7 +439,7 @@ export default function Home() {
               <div className="empty-state">
                 <div className="empty-icon"><Sparkles size={27} /></div>
                 <h3>Ready for the beat</h3>
-                <p>Set your song brief, choose the section order and lengths, then generate.</p>
+                <p>Start from a title, choose a theme, set the arrangement, then generate.</p>
                 <div className="mini-structure">
                   {structure.slice(0, 5).map((section) => <span key={section}>{section.split(" (")[0]}</span>)}
                 </div>
