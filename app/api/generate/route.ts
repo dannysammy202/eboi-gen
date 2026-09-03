@@ -61,7 +61,6 @@ OUTPUT RULES
 - Do not add commentary before or after the lyrics.`;
 }
 
-
 function validateStructure(lyrics: string, structure: string[]) {
   const expected = structure.map((item) => {
     const match = item.match(/^(.*?) \((\d+) lines\)$/);
@@ -88,6 +87,64 @@ function validateStructure(lyrics: string, structure: string[]) {
   return expected.every(({ label, lines }) => sections.get(label)?.length === lines);
 }
 
+function errorText(error: unknown) {
+  if (error instanceof Error) return error.message;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function isTransientGeminiError(error: unknown) {
+  const text = errorText(error).toLowerCase();
+  return (
+    text.includes("503") ||
+    text.includes("unavailable") ||
+    text.includes("high demand") ||
+    text.includes("overloaded") ||
+    text.includes("resource exhausted") ||
+    text.includes("429")
+  );
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function generateWithFallback(
+  ai: GoogleGenAI,
+  contents: string,
+  maxOutputTokens: number,
+  preferredModel?: string,
+) {
+  const configured = preferredModel || process.env.GEMINI_MODEL || "gemini-3.7-flash";
+  const models = Array.from(
+    new Set([configured, "gemini-3.6-flash", "gemini-3.5-flash"]),
+  );
+
+  let lastError: unknown;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config: { maxOutputTokens },
+        });
+        return { response, model };
+      } catch (error) {
+        lastError = error;
+        if (!isTransientGeminiError(error)) throw error;
+        if (attempt === 0) await sleep(700);
+      }
+    }
+  }
+
+  throw lastError || new Error("Gemini is temporarily unavailable.");
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -105,38 +162,37 @@ export async function POST(request: Request) {
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    const model = process.env.GEMINI_MODEL || "gemini-3.7-flash";
-
     const prompt = buildPrompt(data);
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        temperature: 1.05,
-        maxOutputTokens: 4096,
-      },
-    });
+    const first = await generateWithFallback(ai, prompt, 4096);
 
-    let lyrics = response.text?.trim();
+    let lyrics = first.response.text?.trim();
+    let model = first.model;
+
     if (!lyrics) {
       return NextResponse.json({ error: "Gemini returned an empty response." }, { status: 502 });
     }
 
     if (!validateStructure(lyrics, data.structure)) {
-      const correction = await ai.models.generateContent({
+      const correction = await generateWithFallback(
+        ai,
+        `${prompt}\n\nREVISION TASK\nThe previous draft did not follow every requested section length exactly. Rewrite the full song from scratch. Follow the structure labels and exact lyric-line counts with zero exceptions.`,
+        4096,
         model,
-        contents: `${prompt}\n\nREVISION TASK\nThe previous draft did not follow every requested section length exactly. Rewrite the full song from scratch. Follow the structure labels and exact lyric-line counts with zero exceptions.`,
-        config: {
-          temperature: 0.9,
-          maxOutputTokens: 4096,
-        },
-      });
-      lyrics = correction.text?.trim() || lyrics;
+      );
+      lyrics = correction.response.text?.trim() || lyrics;
+      model = correction.model;
     }
 
     return NextResponse.json({ lyrics, model });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Something went wrong while generating lyrics.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const transient = isTransientGeminiError(error);
+    return NextResponse.json(
+      {
+        error: transient
+          ? "Gemini is busy across the available models. Please try again in a moment."
+          : errorText(error) || "Something went wrong while generating lyrics.",
+      },
+      { status: transient ? 503 : 500 },
+    );
   }
 }
