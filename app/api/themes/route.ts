@@ -21,6 +21,59 @@ function cleanJson(text: string) {
     .replace(/\s*```$/, "");
 }
 
+function errorText(error: unknown) {
+  if (error instanceof Error) return error.message;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function isTransientGeminiError(error: unknown) {
+  const text = errorText(error).toLowerCase();
+  return (
+    text.includes("503") ||
+    text.includes("unavailable") ||
+    text.includes("high demand") ||
+    text.includes("overloaded") ||
+    text.includes("resource exhausted") ||
+    text.includes("429")
+  );
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function generateWithFallback(ai: GoogleGenAI, contents: string) {
+  const configured = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+  const models = Array.from(
+    new Set([configured, "gemini-3.6-flash", "gemini-3.5-flash"]),
+  );
+
+  let lastError: unknown;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config: { maxOutputTokens: 1600 },
+        });
+        return { response, model };
+      } catch (error) {
+        lastError = error;
+        if (!isTransientGeminiError(error)) throw error;
+        if (attempt === 0) await sleep(700);
+      }
+    }
+  }
+
+  throw lastError || new Error("Gemini is temporarily unavailable.");
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -74,17 +127,9 @@ Return JSON only, with no markdown and no commentary, using this exact shape:
 ]`;
 
     const ai = new GoogleGenAI({ apiKey });
-    const model = process.env.GEMINI_MODEL || "gemini-3.7-flash";
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        temperature: 1.15,
-        maxOutputTokens: 1600,
-      },
-    });
+    const generated = await generateWithFallback(ai, prompt);
+    const raw = generated.response.text?.trim();
 
-    const raw = response.text?.trim();
     if (!raw) {
       return NextResponse.json({ error: "Gemini returned an empty response." }, { status: 502 });
     }
@@ -111,9 +156,16 @@ Return JSON only, with no markdown and no commentary, using this exact shape:
       return NextResponse.json({ error: "Gemini did not return five complete themes. Regenerate the set." }, { status: 502 });
     }
 
-    return NextResponse.json({ themes: validThemes, model });
+    return NextResponse.json({ themes: validThemes, model: generated.model });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Something went wrong while generating themes.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const transient = isTransientGeminiError(error);
+    return NextResponse.json(
+      {
+        error: transient
+          ? "Gemini is busy across the available models. Please try again in a moment."
+          : errorText(error) || "Something went wrong while generating themes.",
+      },
+      { status: transient ? 503 : 500 },
+    );
   }
 }
