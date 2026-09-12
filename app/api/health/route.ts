@@ -19,7 +19,7 @@ export async function GET() {
     const response = await ai.models.generateContent({
       model,
       contents: "Reply with exactly: OK",
-      config: { maxOutputTokens: 16 },
+      config: { maxOutputTokens: 256 },
     });
 
     return NextResponse.json({
