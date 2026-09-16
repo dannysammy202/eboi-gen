@@ -16,20 +16,6 @@ type BeatRequest = {
   description?: string;
 };
 
-type AudioBlock = {
-  type?: string;
-  data?: string;
-  mime_type?: string;
-};
-
-type InteractionWithAudio = {
-  output_audio?: AudioBlock;
-  steps?: Array<{
-    type?: string;
-    content?: AudioBlock[];
-  }>;
-};
-
 function errorText(error: unknown) {
   if (error instanceof Error) return error.message;
   try {
@@ -70,22 +56,6 @@ REQUIREMENTS
 - ${durationLine}`;
 }
 
-function getAudioBlock(interaction: unknown) {
-  const result = interaction as InteractionWithAudio;
-
-  if (result.output_audio?.data) return result.output_audio;
-
-  for (const step of [...(result.steps || [])].reverse()) {
-    for (const part of [...(step.content || [])].reverse()) {
-      if (part.data && (part.type === "audio" || part.mime_type?.startsWith("audio/"))) {
-        return part;
-      }
-    }
-  }
-
-  return undefined;
-}
-
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -107,13 +77,13 @@ export async function POST(request: Request) {
 
     const model = data.mode === "full" ? "lyria-3.5" : "lyria-3-clip-preview";
     const ai = new GoogleGenAI({ apiKey });
+
     const interaction = await ai.interactions.create({
       model,
       input: buildPrompt(data),
-      response_format: { type: "audio" },
     });
 
-    const audio = getAudioBlock(interaction);
+    const audio = interaction.output_audio;
     if (!audio?.data) {
       return NextResponse.json(
         { error: "Lyria returned no audio. Try a different prompt or generate again." },
