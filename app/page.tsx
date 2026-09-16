@@ -55,6 +55,9 @@ const directionOptions = [
   "Reflective",
   "Introspective",
   "Vulnerable",
+  "Love",
+  "Romantic",
+  "Heartfelt",
   "Grateful",
   "Hopeful",
   "Victory",
@@ -65,6 +68,20 @@ const directionOptions = [
   "Testimony",
   "Joyful",
   "Motivational",
+  "Drill",
+  "Trap",
+  "Afro-trap",
+  "Afrobeats",
+  "Afro-R&B",
+  "R&B",
+  "Jersey",
+  "Boom bap",
+  "Club-ready",
+  "Soulful",
+  "Dreamy",
+  "Gritty",
+  "Storytelling",
+  "Celebratory",
 ];
 
 const initialState: FormState = {
@@ -145,6 +162,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
 
   const [themeTitle, setThemeTitle] = useState(initialState.title);
+  const [themeTempo, setThemeTempo] = useState(initialState.tempo);
   const [direction, setDirection] = useState("Open");
   const [soundNote, setSoundNote] = useState("");
   const [themes, setThemes] = useState<ThemeIdea[]>([]);
@@ -169,6 +187,11 @@ export default function Home() {
       return;
     }
 
+    if (!themeTempo.trim()) {
+      setThemeError("Enter a tempo before generating themes.");
+      return;
+    }
+
     setThemeLoading(true);
     setThemeError("");
 
@@ -176,7 +199,7 @@ export default function Home() {
       const response = await fetch("/api/themes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: themeTitle, direction, soundNote }),
+        body: JSON.stringify({ title: themeTitle, tempo: themeTempo, direction, soundNote }),
       });
 
       const data = await response.json();
@@ -192,7 +215,7 @@ export default function Home() {
   }
 
   function useTheme(theme: ThemeIdea) {
-    setForm((current) => ({ ...current, title: themeTitle, theme: theme.theme, feel: direction }));
+    setForm((current) => ({ ...current, title: themeTitle, theme: theme.theme, feel: direction, tempo: themeTempo }));
     setActiveTool("lyrics");
   }
 
@@ -261,7 +284,7 @@ export default function Home() {
           <div>
             <p className="kicker">EBOI LYRIC STUDIO</p>
             <h2>{activeTool === "lyrics" ? "Lyrics Generator" : "Theme Generator"}</h2>
-            <p>{activeTool === "lyrics" ? "Set the song brief, feel, structure and section lengths, then generate the full record." : "Start with a title, shape the direction, then generate five themes to choose from."}</p>
+            <p>{activeTool === "lyrics" ? "Set the song brief, feel, structure and section lengths, then generate the full record." : "Start with a title, tempo and direction, then generate five themes to choose from."}</p>
           </div>
         </header>
 
@@ -307,7 +330,7 @@ export default function Home() {
               </label>
 
               <div className="field">
-                <span>How should it feel? <small>Optional</small></span>
+                <span>How should it feel / sound? <small>Optional</small></span>
                 <div className="direction-pills">
                   {directionOptions.map((option) => (
                     <button key={option} type="button" className={form.feel === option ? "active" : ""} onClick={() => update("feel", option)}>{option}</button>
@@ -315,7 +338,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <button className="text-link" type="button" onClick={() => { setThemeTitle(form.title); setDirection(form.feel); setActiveTool("themes"); }}>
+              <button className="text-link" type="button" onClick={() => { setThemeTitle(form.title); setThemeTempo(form.tempo); setDirection(form.feel); setActiveTool("themes"); }}>
                 <Lightbulb size={15} /> Need a theme for this title?
               </button>
 
@@ -406,13 +429,22 @@ export default function Home() {
                 <Lightbulb size={20} />
               </div>
 
-              <label className="field">
-                <span>Title</span>
-                <input value={themeTitle} onChange={(e) => setThemeTitle(e.target.value)} placeholder="Locked In" />
-              </label>
+              <div className="field-grid two">
+                <label className="field">
+                  <span>Title</span>
+                  <input value={themeTitle} onChange={(e) => setThemeTitle(e.target.value)} placeholder="Locked In" />
+                </label>
+                <label className="field">
+                  <span>Tempo</span>
+                  <div className="suffix-field">
+                    <input type="number" min="50" max="220" value={themeTempo} onChange={(e) => setThemeTempo(e.target.value)} required />
+                    <span>BPM</span>
+                  </div>
+                </label>
+              </div>
 
               <div className="field">
-                <span>How should it feel? <small>Optional</small></span>
+                <span>How should it feel / sound? <small>Optional</small></span>
                 <div className="direction-pills">
                   {directionOptions.map((option) => (
                     <button key={option} type="button" className={direction === option ? "active" : ""} onClick={() => setDirection(option)}>{option}</button>
@@ -422,7 +454,7 @@ export default function Home() {
 
               <label className="field">
                 <span>Describe the sound <small>Optional</small></span>
-                <textarea rows={5} value={soundNote} onChange={(e) => setSoundNote(e.target.value)} placeholder="Example: victorious but calm, late-night melodic feel, still hard when the drums land" />
+                <textarea rows={5} value={soundNote} onChange={(e) => setSoundNote(e.target.value)} placeholder="Example: 140 BPM drill bounce, dark keys, melodic hook, calm delivery over hard drums" />
               </label>
 
               <button className="generate" type="button" onClick={generateThemes} disabled={themeLoading}>
@@ -435,7 +467,7 @@ export default function Home() {
 
             <section className="panel theme-results-panel">
               <div className="panel-heading results-heading">
-                <div><p className="kicker">Theme ideas</p><h3>{themes.length ? `5 directions for “${themeTitle}”` : "Your theme ideas appear here"}</h3></div>
+                <div><p className="kicker">Theme ideas</p><h3>{themes.length ? `5 directions for “${themeTitle}” at ${themeTempo} BPM` : "Your theme ideas appear here"}</h3></div>
               </div>
 
               {themes.length ? (
@@ -453,7 +485,7 @@ export default function Home() {
                 <div className="theme-empty">
                   <div className="empty-icon"><Lightbulb size={27} /></div>
                   <h3>Give the title a direction</h3>
-                  <p>Enter the title, add an optional mood or sound note, then generate five different themes.</p>
+                  <p>Enter the title and tempo, add an optional direction or sound note, then generate five different themes.</p>
                 </div>
               )}
             </section>
