@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 type ThemeRequest = {
   title: string;
+  tempo?: string;
   direction?: string;
   soundNote?: string;
 };
@@ -86,9 +87,14 @@ export async function POST(request: Request) {
 
     const data = (await request.json()) as ThemeRequest;
     const title = data.title?.trim();
+    const tempo = data.tempo?.trim();
 
     if (!title) {
       return NextResponse.json({ error: "Enter a song title first." }, { status: 400 });
+    }
+
+    if (!tempo) {
+      return NextResponse.json({ error: "Enter the song tempo first." }, { status: 400 });
     }
 
     const direction = data.direction?.trim() || "Open direction";
@@ -99,7 +105,10 @@ export async function POST(request: Request) {
 SONG TITLE
 ${title}
 
-SELECTED DIRECTION
+TEMPO
+${tempo} BPM
+
+SELECTED DIRECTION / SOUND
 ${direction}
 
 OPTIONAL SOUND NOTE
@@ -110,8 +119,11 @@ Generate exactly 5 distinct theme ideas for this title.
 Requirements:
 - Each idea must feel suitable for a confident Nigerian Christian rap record.
 - Keep the Christian foundation clear without turning every concept into worship language.
-- Explore faith, ambition, discipline, pressure, purpose, winning, growth, identity, grace, resilience, relationships with God, the come-up, and everyday life where relevant.
-- Match the selected direction and sound note when supplied.
+- Explore faith, ambition, discipline, pressure, purpose, winning, growth, identity, grace, resilience, relationships with God, love, relationships, the come-up, and everyday life where relevant.
+- Treat the selected direction as either a mood, lyrical angle, genre, or sonic reference. For example, Love should shape the subject and emotion, while Drill should shape the intensity, attitude, pacing, and type of concept.
+- Use the BPM as an energy and pacing constraint. Let tempo influence intensity, emotional movement, hook potential, lyrical density, and the type of concept you suggest.
+- Do not make speed or BPM itself the subject of the song unless the title naturally points there.
+- Match the selected direction, tempo, and sound note when supplied.
 - Keep every idea meaningfully different from the others.
 - Avoid generic concepts such as simply "trust God" or "God is good".
 - Make each theme specific enough to guide a full song.
