@@ -16,6 +16,20 @@ type BeatRequest = {
   description?: string;
 };
 
+type AudioBlock = {
+  type?: string;
+  data?: string;
+  mime_type?: string;
+};
+
+type InteractionWithAudio = {
+  output_audio?: AudioBlock;
+  steps?: Array<{
+    type?: string;
+    content?: AudioBlock[];
+  }>;
+};
+
 function errorText(error: unknown) {
   if (error instanceof Error) return error.message;
   try {
@@ -56,6 +70,22 @@ REQUIREMENTS
 - ${durationLine}`;
 }
 
+function getAudioBlock(interaction: unknown) {
+  const result = interaction as InteractionWithAudio;
+
+  if (result.output_audio?.data) return result.output_audio;
+
+  for (const step of [...(result.steps || [])].reverse()) {
+    for (const part of [...(step.content || [])].reverse()) {
+      if (part.data && (part.type === "audio" || part.mime_type?.startsWith("audio/"))) {
+        return part;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -83,7 +113,7 @@ export async function POST(request: Request) {
       response_format: { type: "audio" },
     });
 
-    const audio = interaction.output_audio;
+    const audio = getAudioBlock(interaction);
     if (!audio?.data) {
       return NextResponse.json(
         { error: "Lyria returned no audio. Try a different prompt or generate again." },
@@ -100,7 +130,7 @@ export async function POST(request: Request) {
     return new Response(bytes, {
       status: 200,
       headers: {
-        "Content-Type": "audio/mpeg",
+        "Content-Type": audio.mime_type || "audio/mpeg",
         "Content-Disposition": `inline; filename="${safeTitle}-${data.mode}.mp3"`,
         "Cache-Control": "no-store",
         "X-Lyria-Model": model,
