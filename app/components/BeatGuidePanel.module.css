@@ -1,0 +1,98 @@
+.panel {
+  grid-column: 1 / -1;
+  background: rgba(17,18,20,.95);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.heading > svg { color: var(--muted); }
+.heading p { margin: 0; color: var(--accent); font-size: 10px; letter-spacing: .15em; font-weight: 800; }
+.heading h3 { margin: 5px 0 5px; font-size: 20px; letter-spacing: -.03em; }
+.heading span { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.empty { min-height: 360px; padding: 48px 24px 34px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.icon { width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(255,107,44,.2); }
+.empty h4 { margin: 16px 0 8px; font-size: 18px; }
+.empty p { max-width: 590px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.legend, .meta { display: flex; flex-wrap: wrap; gap: 7px; }
+.legend { justify-content: center; margin: 18px 0; }
+.legend span, .meta span { font-size: 10px; color: #aeb0b6; border: 1px solid var(--line); background: #0d0e10; border-radius: 999px; padding: 6px 8px; }
+.generate { min-width: 250px; min-height: 46px; border: 0; border-radius: 11px; background: var(--accent); color: #111; font-weight: 850; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.generate:disabled { opacity: .7; cursor: progress; }
+.error { margin-top: 14px; width: min(620px, 100%); border: 1px solid rgba(255,100,80,.22); background: rgba(255,100,80,.06); color: #ff9483; border-radius: 10px; padding: 11px; font-size: 11px; line-height: 1.5; }
+.guide { padding: 22px; display: grid; gap: 16px; }
+.summary { border: 1px solid var(--line); border-radius: 14px; background: #0d0e10; padding: 16px; display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
+.summary p { margin: 0 0 12px; color: #d6d7db; font-size: 12px; line-height: 1.65; max-width: 760px; }
+.topActions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+.topActions button { min-height: 34px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); color: #d4d5d9; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 10px; font-weight: 750; }
+.topActions button:first-child { border-color: rgba(255,107,44,.35); color: var(--accent); background: var(--accent-soft); }
+.section { border: 1px solid var(--line); border-radius: 14px; background: #0e0f11; padding: 16px; min-width: 0; }
+.sectionHead { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; }
+.sectionHead span { color: var(--accent); font-size: 9px; font-weight: 850; letter-spacing: .1em; }
+.sectionHead h4 { margin: 0; font-size: 13px; }
+.chordGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.chordCard { border: 1px solid var(--line); border-radius: 11px; padding: 12px; background: #111214; }
+.chordCard small { display: block; color: var(--muted); font-size: 9px; margin-bottom: 6px; }
+.chordCard strong { display: block; font-size: 18px; color: var(--accent); }
+.chordCard p { margin: 7px 0; color: #d4d5d9; font-size: 11px; }
+.chordCard span { color: var(--muted); font-size: 9px; }
+.noteBars { display: grid; gap: 8px; }
+.noteBar { display: grid; grid-template-columns: 58px 1fr; gap: 10px; align-items: start; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #111214; }
+.barLabel { font-size: 10px; font-weight: 800; color: var(--accent); padding-top: 5px; }
+.noteList { display: flex; flex-wrap: wrap; gap: 6px; }
+.noteList span { border: 1px solid #33363b; background: #17181b; border-radius: 8px; padding: 6px 8px; color: #bfc1c7; font-size: 9px; }
+.noteList b { color: #f1efe9; }
+.noteBar p { grid-column: 2; margin: 2px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.gridLegend { margin: -4px 0 12px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.patterns { display: grid; gap: 11px; }
+.patternCard { border: 1px solid var(--line); border-radius: 12px; background: #111214; overflow: hidden; }
+.patternHead { padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+.patternHead div { display: grid; gap: 2px; }
+.patternHead strong { font-size: 11px; }
+.patternHead span, .patternHead small { color: var(--muted); font-size: 9px; }
+.gridScroll { overflow-x: auto; }
+.drumGrid { min-width: 760px; display: grid; grid-template-columns: 90px repeat(16, minmax(34px, 1fr)); }
+.drumGrid > .gridLabel, .stepNumber { min-height: 30px; display: grid; place-items: center; border-right: 1px solid #27292e; border-bottom: 1px solid #27292e; }
+.gridLabel { color: #aeb0b6; font-size: 9px; font-weight: 750; justify-content: start !important; padding-left: 10px; background: #0e0f11; }
+.stepNumber { color: #676a71; font-size: 8px; background: #0e0f11; }
+.gridRow { display: contents; }
+.stepCell { min-height: 32px; display: grid; place-items: center; border-right: 1px solid #27292e; border-bottom: 1px solid #27292e; color: transparent; font-size: 9px; background: #121315; }
+.hit { background: rgba(255,107,44,.18); color: var(--accent); }
+.beatStart { border-left: 2px solid #3b3e44 !important; }
+.patternNote { margin: 0; padding: 10px 12px 12px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.arrangement { display: grid; gap: 7px; }
+.arrangementRow { display: grid; grid-template-columns: 80px 120px 1fr; gap: 10px; align-items: center; border-bottom: 1px solid #23252a; padding: 8px 0; }
+.arrangementRow:last-child { border-bottom: 0; }
+.arrangementRow span { color: var(--accent); font-size: 9px; font-weight: 800; }
+.arrangementRow strong { font-size: 10px; }
+.arrangementRow p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.section ol { margin: 0; padding-left: 20px; }
+.section li { color: #bfc1c7; font-size: 10px; line-height: 1.55; margin-bottom: 7px; }
+.footer { display: flex; justify-content: space-between; gap: 10px; color: #696c73; font-size: 9px; padding: 2px 2px 0; }
+.spin { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 850px) {
+  .chordGrid { grid-template-columns: 1fr 1fr; }
+  .twoCol { grid-template-columns: 1fr; }
+  .summary { flex-direction: column; }
+  .topActions { justify-content: flex-start; }
+}
+@media (max-width: 560px) {
+  .heading { padding: 18px 17px 15px; }
+  .guide { padding: 14px; }
+  .empty { padding: 40px 17px 28px; }
+  .chordGrid { grid-template-columns: 1fr 1fr; }
+  .noteBar { grid-template-columns: 1fr; }
+  .noteBar p { grid-column: 1; }
+  .arrangementRow { grid-template-columns: 70px 1fr; }
+  .arrangementRow p { grid-column: 1 / -1; }
+  .footer { flex-direction: column; }
+}
