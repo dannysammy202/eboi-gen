@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 type SongRequest = {
   title: string;
   theme: string;
+  feel?: string;
   tempo: string;
   songKey: string;
   includeIntro: boolean;
@@ -23,12 +24,15 @@ function buildPrompt(data: SongRequest) {
     .map((section, index) => `${index + 1}. ${section}`)
     .join("\n");
 
+  const feel = data.feel?.trim() || "Open";
+
   return `Write an original hard-hitting energy song for Eboi, a Nigerian Christian rap artist. Use a melodic trap sound with fluid pocket-focused rap delivery, sung melodic phrases, hard-hitting anthem energy, and a mix of singing and rapping.
 
 SONG DETAILS
 Title: ${data.title}
 Tempo: ${data.tempo} BPM
 Theme: ${data.theme}
+Feel / direction: ${feel}
 Key: ${data.songKey}
 
 STRUCTURE
@@ -42,6 +46,7 @@ SECTION LENGTHS
 
 STYLE REQUIREMENTS
 - Write fully original lyrics. Do not imitate or copy any specific artist, song, melody, lyrics, signature phrases, or recognisable lyrical mannerisms.
+- Let the selected feel / direction shape the energy, word choice, cadence, imagery, hook delivery, and emotional tone across the whole song.
 - Melodic, sung hooks with one catchy repeatable anchor line.
 - Verses should be mood and cadence driven rather than narrative. Use short reflective lines about faith, ambition, discipline, growth, pressure, purpose, and the come-up.
 - Prioritise pocket, bounce, melody, internal rhyme, and repeatable phrasing over packing new information into every line.
@@ -49,7 +54,7 @@ STYLE REQUIREMENTS
 - Use only a little Nigerian Pidgin where it fits naturally.
 - Avoid worn-out worship clichés and generic church language.
 - Keep the hook simple enough for a crowd to shout back live.
-- Let the title and theme influence the central phrase and recurring imagery.
+- Let the title, theme, and selected feel influence the central phrase and recurring imagery.
 - Keep line lengths performance-friendly. Avoid long prose-like bars.
 - Use tasteful ad-libs in brackets only where they help the pocket.
 
