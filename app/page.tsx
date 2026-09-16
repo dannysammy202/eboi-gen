@@ -20,6 +20,7 @@ type ToolView = "lyrics" | "themes";
 type FormState = {
   title: string;
   theme: string;
+  feel: string;
   tempo: string;
   songKey: string;
   includeIntro: boolean;
@@ -42,18 +43,34 @@ type ThemeIdea = {
 const directionOptions = [
   "Open",
   "Hard-hitting",
+  "Anthemic",
+  "Energetic",
+  "Aggressive",
+  "Confident",
   "Melodic",
+  "Smooth",
+  "Chill",
+  "Late-night",
+  "Dark & focused",
   "Reflective",
+  "Introspective",
+  "Vulnerable",
+  "Grateful",
+  "Hopeful",
   "Victory",
   "Come-up",
+  "Resilient",
   "Street faith",
-  "Dark & focused",
-  "Smooth",
+  "Prayerful",
+  "Testimony",
+  "Joyful",
+  "Motivational",
 ];
 
 const initialState: FormState = {
   title: "Locked In",
   theme: "Sold out to God, moving how He says I should move, putting the Word in me, rising with purpose and expecting to win.",
+  feel: "Open",
   tempo: "122",
   songKey: "Bm",
   includeIntro: false,
@@ -175,7 +192,7 @@ export default function Home() {
   }
 
   function useTheme(theme: ThemeIdea) {
-    setForm((current) => ({ ...current, title: themeTitle, theme: theme.theme }));
+    setForm((current) => ({ ...current, title: themeTitle, theme: theme.theme, feel: direction }));
     setActiveTool("lyrics");
   }
 
@@ -244,7 +261,7 @@ export default function Home() {
           <div>
             <p className="kicker">EBOI LYRIC STUDIO</p>
             <h2>{activeTool === "lyrics" ? "Lyrics Generator" : "Theme Generator"}</h2>
-            <p>{activeTool === "lyrics" ? "Set the song brief, structure and section lengths, then generate the full record." : "Start with a title, shape the direction, then generate five themes to choose from."}</p>
+            <p>{activeTool === "lyrics" ? "Set the song brief, feel, structure and section lengths, then generate the full record." : "Start with a title, shape the direction, then generate five themes to choose from."}</p>
           </div>
         </header>
 
@@ -289,7 +306,16 @@ export default function Home() {
                 <textarea rows={4} value={form.theme} onChange={(e) => update("theme", e.target.value)} placeholder="Write your theme, or select one from Theme Generator." required />
               </label>
 
-              <button className="text-link" type="button" onClick={() => { setThemeTitle(form.title); setActiveTool("themes"); }}>
+              <div className="field">
+                <span>How should it feel? <small>Optional</small></span>
+                <div className="direction-pills">
+                  {directionOptions.map((option) => (
+                    <button key={option} type="button" className={form.feel === option ? "active" : ""} onClick={() => update("feel", option)}>{option}</button>
+                  ))}
+                </div>
+              </div>
+
+              <button className="text-link" type="button" onClick={() => { setThemeTitle(form.title); setDirection(form.feel); setActiveTool("themes"); }}>
                 <Lightbulb size={15} /> Need a theme for this title?
               </button>
 
