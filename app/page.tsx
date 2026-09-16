@@ -15,6 +15,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
+import BeatGuidePanel from "./components/BeatGuidePanel";
 
 type StartMode = "hook" | "verse";
 type ToolView = "lyrics" | "themes" | "beats";
@@ -384,7 +385,7 @@ export default function Home() {
     ? "Set the song brief, feel, structure and section lengths, then generate the full record."
     : activeTool === "themes"
       ? "Start with a title, tempo and direction, then generate five themes to choose from."
-      : "Shape the production brief, test a 30-second preview, then generate a longer instrumental beat.";
+      : "Shape the production brief, generate Lyria audio, or turn the same brief into a step-by-step BandLab production guide.";
 
   return (
     <div className="app-shell">
@@ -776,6 +777,8 @@ export default function Home() {
                 </div>
               )}
             </section>
+
+            <BeatGuidePanel beat={beat} />
           </section>
         )}
       </main>
