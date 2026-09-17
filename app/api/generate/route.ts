@@ -26,7 +26,7 @@ function buildPrompt(data: SongRequest) {
 
   const feel = data.feel?.trim() || "Open";
 
-  return `Write an original hard-hitting energy song for Eboi, a Nigerian Christian rap artist. Use a melodic trap sound with fluid pocket-focused rap delivery, sung melodic phrases, hard-hitting anthem energy, and a mix of singing and rapping.
+  return `Write an original song for Eboi, a Nigerian Christian rap artist. Eboi's writing identity blends melodic trap instincts with reflective, cadence-led rap. The result should feel musical, fluid, personal, confident and performance-ready, while remaining unmistakably Eboi.
 
 SONG DETAILS
 Title: ${data.title}
@@ -44,17 +44,28 @@ SECTION LENGTHS
 - Hooks: ${data.hookCount} total, exactly ${data.hookLines} lines each
 - Outro: ${data.includeOutro ? `${data.outroLines} lines` : "None"}
 
+EBOI WRITING AND FLOW DIRECTION
+- Keep the melodic side smooth and pocket-focused. Use natural melodic phrasing, fluid cadence, internal rhyme, bounce and lines that sit comfortably on a trap beat.
+- Add a reflective rap side built around conversational phrasing, emotional honesty, purposeful line construction and verses that develop naturally from one thought into the next.
+- Let flows evolve inside a verse. Shift cadence, line length, rhyme placement and intensity where it keeps the performance alive instead of locking every bar into the same pattern.
+- Balance melody and straight rapping naturally. Some lines should glide, some should land firmly, and transitions should feel intentional.
+- Use concise lines with room for delivery. Avoid overcrowding bars with explanations or too many ideas.
+- Build memorable pockets through internal rhymes, repeated sounds, strategic repetition and connected phrases rather than forcing end-rhyme on every line.
+- Reflect on faith, ambition, discipline, pressure, purpose, growth, setbacks, gratitude and the come-up from a personal point of view.
+- Let Christian conviction appear naturally in the writing. Keep faith clear without turning verses into sermons or generic worship language.
+- Keep the voice grounded and conversational. Lines should sound natural when spoken or performed, not like formal poetry.
+- Do not introduce choir, gospel-production, spacious-production or other instrumental assumptions from lyrical references. This prompt concerns lyrics, phrasing and flow. The user's tempo, key, theme and feel define the song context.
+
 STYLE REQUIREMENTS
 - Write fully original lyrics. Do not imitate or copy any specific artist, song, melody, lyrics, signature phrases, or recognisable lyrical mannerisms.
-- Let the selected feel / direction shape the energy, word choice, cadence, imagery, hook delivery, and emotional tone across the whole song.
-- Melodic, sung hooks with one catchy repeatable anchor line.
-- Verses should be mood and cadence driven rather than narrative. Use short reflective lines about faith, ambition, discipline, growth, pressure, purpose, and the come-up.
-- Prioritise pocket, bounce, melody, internal rhyme, and repeatable phrasing over packing new information into every line.
-- State the Christian faith message clearly and directly while keeping the writing confident, cool, and edgy rather than preachy.
+- Let the selected feel / direction shape the energy, word choice, cadence, imagery, hook delivery and emotional tone across the whole song.
+- Write melodic hooks with one catchy repeatable anchor line when the song direction supports it.
+- Prioritise pocket, flow, melody, internal rhyme, emotional clarity and repeatable phrasing over packing new information into every line.
+- State the Christian faith message clearly while keeping the writing confident and natural rather than preachy.
 - Use only a little Nigerian Pidgin where it fits naturally.
 - Avoid worn-out worship clichés and generic church language.
-- Keep the hook simple enough for a crowd to shout back live.
-- Let the title, theme, and selected feel influence the central phrase and recurring imagery.
+- Keep hooks simple enough to remember after one or two listens.
+- Let the title, theme and selected feel influence the central phrase and recurring imagery.
 - Keep line lengths performance-friendly. Avoid long prose-like bars.
 - Use tasteful ad-libs in brackets only where they help the pocket.
 
