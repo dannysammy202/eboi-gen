@@ -115,17 +115,29 @@ function errorText(error: unknown) {
 function isTransientGeminiError(error: unknown) {
   const text = errorText(error).toLowerCase();
   return (
+    text.includes("500") ||
+    text.includes("502") ||
     text.includes("503") ||
+    text.includes("504") ||
     text.includes("unavailable") ||
     text.includes("high demand") ||
     text.includes("overloaded") ||
     text.includes("resource exhausted") ||
-    text.includes("429")
+    text.includes("429") ||
+    text.includes("rate limit") ||
+    text.includes("timeout") ||
+    text.includes("timed out")
   );
 }
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryDelay(attempt: number) {
+  const base = 750 * 2 ** attempt;
+  const jitter = Math.floor(Math.random() * 400);
+  return Math.min(base + jitter, 6500);
 }
 
 async function generateWithFallback(
@@ -142,7 +154,7 @@ async function generateWithFallback(
   let lastError: unknown;
 
   for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
       try {
         const response = await ai.models.generateContent({
           model,
@@ -153,7 +165,7 @@ async function generateWithFallback(
       } catch (error) {
         lastError = error;
         if (!isTransientGeminiError(error)) throw error;
-        if (attempt === 0) await sleep(700);
+        if (attempt < 3) await sleep(retryDelay(attempt));
       }
     }
   }
