@@ -700,7 +700,7 @@ export default function Home() {
               </div>
 
               <div className="field">
-                <span>Genre / sound</span>
+                <span>Sound <small>Select 1</small></span>
                 <div className="direction-pills">
                   {beatGenreOptions.map((option) => (
                     <button key={option} type="button" className={beat.genre === option ? "active" : ""} onClick={() => updateBeat("genre", option)}>{option}</button>
