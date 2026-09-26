@@ -95,32 +95,36 @@ function sleep(ms: number) {
 }
 
 function retryDelay(attempt: number) {
-  const base = 750 * 2 ** attempt;
-  const jitter = Math.floor(Math.random() * 400);
-  return Math.min(base + jitter, 6500);
+  return attempt === 0 ? 500 : 1000;
 }
 
 async function generateWithFallback(ai: GoogleGenAI, contents: string) {
-  const configured = process.env.GEMINI_MODEL || "gemini-3.7-flash";
-  const models = Array.from(new Set([configured, "gemini-3.6-flash", "gemini-3.5-flash"]));
+  const configured = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const models = Array.from(new Set([configured, "gemini-3.8-flash", "gemini-3.5-flash-lite"]));
   let lastError: unknown;
 
   for (const model of models) {
-    for (let attempt = 0; attempt < 4; attempt += 1) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        const response = await ai.models.generateContent({
+        const interaction = await ai.interactions.create({
           model,
-          contents,
-          config: {
-            maxOutputTokens: 6000,
-            responseMimeType: "application/json",
+          input: contents,
+          response_format: {
+            type: "text",
+            mime_type: "application/json",
+          },
+          generation_config: {
+            max_output_tokens: 6000,
           },
         });
-        return { response, model };
+
+        const text = interaction.output_text?.trim();
+        if (!text) throw new Error("Gemini returned an empty production guide.");
+        return { text, model };
       } catch (error) {
         lastError = error;
         if (!isTransientGeminiError(error)) throw error;
-        if (attempt < 3) await sleep(retryDelay(attempt));
+        if (attempt === 0) await sleep(retryDelay(attempt));
       }
     }
   }
@@ -304,7 +308,7 @@ export async function POST(request: Request) {
 
     const ai = new GoogleGenAI({ apiKey });
     const generated = await generateWithFallback(ai, buildPrompt(data));
-    const raw = generated.response.text?.trim();
+    const raw = generated.text;
 
     if (!raw) {
       return NextResponse.json({ error: "Gemini returned an empty production guide." }, { status: 502 });
