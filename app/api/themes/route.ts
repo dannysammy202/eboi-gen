@@ -92,12 +92,8 @@ async function generateWithFallback(ai: GoogleGenAI, contents: string) {
           contents,
           config: {
             maxOutputTokens: 2000,
-            responseFormat: {
-              text: {
-                mimeType: "application/json",
-                schema: themeSchema,
-              },
-            },
+            responseMimeType: "application/json",
+            responseSchema: themeSchema,
           },
         });
         return { response, model };
