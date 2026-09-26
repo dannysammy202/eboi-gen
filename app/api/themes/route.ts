@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 type ThemeRequest = {
   title: string;
   tempo?: string;
-  direction?: string;
+  feels?: string[];
+  sound?: string;
   soundNote?: string;
 };
 
@@ -109,7 +110,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Enter the song tempo first." }, { status: 400 });
     }
 
-    const direction = data.direction?.trim() || "Open direction";
+    const feels = Array.isArray(data.feels) ? data.feels.filter(Boolean).slice(0, 5) : [];
+    const feelDirection = feels.length ? feels.join(", ") : "Open direction";
+    const sound = data.sound?.trim() || "Trap";
     const soundNote = data.soundNote?.trim() || "No extra sound description supplied";
 
     const prompt = `You are developing song concepts for Eboi, a Nigerian Christian rap artist making original melodic trap and rap records.
@@ -120,8 +123,11 @@ ${title}
 TEMPO
 ${tempo} BPM
 
-SELECTED DIRECTION / SOUND
-${direction}
+SELECTED FEEL / DIRECTION
+${feelDirection}
+
+SELECTED SOUND / GENRE
+${sound}
 
 OPTIONAL SOUND NOTE
 ${soundNote}
@@ -132,10 +138,11 @@ Requirements:
 - Each idea must feel suitable for a confident Nigerian Christian rap record.
 - Keep the Christian foundation clear without turning every concept into worship language.
 - Explore faith, ambition, discipline, pressure, purpose, winning, growth, identity, grace, resilience, relationships with God, love, relationships, the come-up, and everyday life where relevant.
-- Treat the selected direction as either a mood, lyrical angle, genre, or sonic reference. For example, Love should shape the subject and emotion, while Drill should shape the intensity, attitude, pacing, and type of concept.
+- Treat the selected feels as emotional, lyrical and energy directions. Combine them coherently rather than treating them as separate song concepts.
+- Treat the selected sound as the primary musical lane. Let it influence pacing, hook potential, lyrical density and the type of concept without making the genre itself the subject.
 - Use the BPM as an energy and pacing constraint. Let tempo influence intensity, emotional movement, hook potential, lyrical density, and the type of concept you suggest.
 - Do not make speed or BPM itself the subject of the song unless the title naturally points there.
-- Match the selected direction, tempo, and sound note when supplied.
+- Match the selected feels, sound, tempo and sound note when supplied.
 - Keep every idea meaningfully different from the others.
 - Avoid generic concepts such as simply "trust God" or "God is good".
 - Make each theme specific enough to guide a full song.
