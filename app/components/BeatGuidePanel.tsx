@@ -9,7 +9,7 @@ type BeatForm = {
   genre: string;
   tempo: string;
   songKey: string;
-  feel: string;
+  feels: string[];
   drumStyle: string;
   bassStyle: string;
   melodyStyle: string;

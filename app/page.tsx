@@ -24,7 +24,8 @@ type BeatMode = "preview" | "full";
 type FormState = {
   title: string;
   theme: string;
-  feel: string;
+  feels: string[];
+  sound: string;
   tempo: string;
   songKey: string;
   includeIntro: boolean;
@@ -49,7 +50,7 @@ type BeatForm = {
   genre: string;
   tempo: string;
   songKey: string;
-  feel: string;
+  feels: string[];
   drumStyle: string;
   bassStyle: string;
   melodyStyle: string;
@@ -58,8 +59,7 @@ type BeatForm = {
   description: string;
 };
 
-const directionOptions = [
-  "Open",
+const feelOptions = [
   "Hard-hitting",
   "Anthemic",
   "Energetic",
@@ -86,14 +86,6 @@ const directionOptions = [
   "Testimony",
   "Joyful",
   "Motivational",
-  "Drill",
-  "Trap",
-  "Afro-trap",
-  "Afrobeats",
-  "Afro-R&B",
-  "R&B",
-  "Jersey",
-  "Boom bap",
   "Club-ready",
   "Soulful",
   "Dreamy",
@@ -123,7 +115,8 @@ const beatGenreOptions = [
 const initialState: FormState = {
   title: "Locked In",
   theme: "Sold out to God, moving how He says I should move, putting the Word in me, rising with purpose and expecting to win.",
-  feel: "Open",
+  feels: [],
+  sound: "Trap",
   tempo: "122",
   songKey: "Bm",
   includeIntro: false,
@@ -142,7 +135,7 @@ const initialBeat: BeatForm = {
   genre: "Melodic Trap",
   tempo: "122",
   songKey: "Bm",
-  feel: "Melodic",
+  feels: ["Melodic"],
   drumStyle: "Hard trap drums, crisp hi-hats and a punchy snare",
   bassStyle: "Deep controlled 808s with tasteful glides",
   melodyStyle: "Dark melodic keys with space for vocals",
@@ -213,7 +206,8 @@ export default function Home() {
 
   const [themeTitle, setThemeTitle] = useState(initialState.title);
   const [themeTempo, setThemeTempo] = useState(initialState.tempo);
-  const [direction, setDirection] = useState("Open");
+  const [themeFeels, setThemeFeels] = useState<string[]>([]);
+  const [themeSound, setThemeSound] = useState("Trap");
   const [soundNote, setSoundNote] = useState("");
   const [themes, setThemes] = useState<ThemeIdea[]>([]);
   const [themeLoading, setThemeLoading] = useState(false);
@@ -242,6 +236,14 @@ export default function Home() {
     setBeat((current) => ({ ...current, [key]: value }));
   };
 
+  const toggleFeel = (selected: string[], option: string, setter: (next: string[]) => void) => {
+    if (selected.includes(option)) {
+      setter(selected.filter((item) => item !== option));
+      return;
+    }
+    if (selected.length < 5) setter([...selected, option]);
+  };
+
   async function generateThemes() {
     if (!themeTitle.trim()) {
       setThemeError("Enter a title before generating themes.");
@@ -260,7 +262,7 @@ export default function Home() {
       const response = await fetch("/api/themes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: themeTitle, tempo: themeTempo, direction, soundNote }),
+        body: JSON.stringify({ title: themeTitle, tempo: themeTempo, feels: themeFeels, sound: themeSound, soundNote }),
       });
 
       const data = await response.json();
@@ -276,7 +278,7 @@ export default function Home() {
   }
 
   function useTheme(theme: ThemeIdea) {
-    setForm((current) => ({ ...current, title: themeTitle, theme: theme.theme, feel: direction, tempo: themeTempo }));
+    setForm((current) => ({ ...current, title: themeTitle, theme: theme.theme, feels: themeFeels, sound: themeSound, tempo: themeTempo }));
     setActiveTool("lyrics");
   }
 
@@ -285,7 +287,8 @@ export default function Home() {
       ...current,
       title: themeTitle,
       tempo: themeTempo,
-      feel: direction === "Open" ? current.feel : direction,
+      genre: themeSound,
+      feels: themeFeels,
       description: theme.theme,
     }));
     setActiveTool("beats");
@@ -297,7 +300,8 @@ export default function Home() {
       title: form.title,
       tempo: form.tempo,
       songKey: form.songKey,
-      feel: form.feel === "Open" ? current.feel : form.feel,
+      genre: form.sound,
+      feels: form.feels,
       description: form.theme,
     }));
     setActiveTool("beats");
@@ -309,7 +313,8 @@ export default function Home() {
       title: beat.title || current.title,
       tempo: beat.tempo,
       songKey: beat.songKey,
-      feel: beat.feel,
+      feels: beat.feels,
+      sound: beat.genre,
     }));
     setActiveTool("lyrics");
   }
@@ -470,16 +475,25 @@ export default function Home() {
               </label>
 
               <div className="field">
-                <span>How should it feel / sound? <small>Optional</small></span>
+                <span>Feel <small>Select up to 5</small></span>
                 <div className="direction-pills">
-                  {directionOptions.map((option) => (
-                    <button key={option} type="button" className={form.feel === option ? "active" : ""} onClick={() => update("feel", option)}>{option}</button>
+                  {feelOptions.map((option) => (
+                    <button key={option} type="button" className={form.feels.includes(option) ? "active" : ""} onClick={() => toggleFeel(form.feels, option, (next) => update("feels", next))}>{option}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="field">
+                <span>Sound <small>Select 1</small></span>
+                <div className="direction-pills">
+                  {beatGenreOptions.map((option) => (
+                    <button key={option} type="button" className={form.sound === option ? "active" : ""} onClick={() => update("sound", option)}>{option}</button>
                   ))}
                 </div>
               </div>
 
               <div className="flow-links">
-                <button className="text-link" type="button" onClick={() => { setThemeTitle(form.title); setThemeTempo(form.tempo); setDirection(form.feel); setActiveTool("themes"); }}>
+                <button className="text-link" type="button" onClick={() => { setThemeTitle(form.title); setThemeTempo(form.tempo); setThemeFeels(form.feels); setThemeSound(form.sound); setActiveTool("themes"); }}>
                   <Lightbulb size={15} /> Need a theme for this title?
                 </button>
                 <button className="text-link" type="button" onClick={openBeatFromLyrics}>
@@ -589,10 +603,19 @@ export default function Home() {
               </div>
 
               <div className="field">
-                <span>How should it feel / sound? <small>Optional</small></span>
+                <span>Feel <small>Select up to 5</small></span>
                 <div className="direction-pills">
-                  {directionOptions.map((option) => (
-                    <button key={option} type="button" className={direction === option ? "active" : ""} onClick={() => setDirection(option)}>{option}</button>
+                  {feelOptions.map((option) => (
+                    <button key={option} type="button" className={themeFeels.includes(option) ? "active" : ""} onClick={() => toggleFeel(themeFeels, option, setThemeFeels)}>{option}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="field">
+                <span>Sound <small>Select 1</small></span>
+                <div className="direction-pills">
+                  {beatGenreOptions.map((option) => (
+                    <button key={option} type="button" className={themeSound === option ? "active" : ""} onClick={() => setThemeSound(option)}>{option}</button>
                   ))}
                 </div>
               </div>
@@ -677,7 +700,7 @@ export default function Home() {
               </div>
 
               <div className="field">
-                <span>Genre / sound</span>
+                <span>Sound <small>Select 1</small></span>
                 <div className="direction-pills">
                   {beatGenreOptions.map((option) => (
                     <button key={option} type="button" className={beat.genre === option ? "active" : ""} onClick={() => updateBeat("genre", option)}>{option}</button>
@@ -686,10 +709,10 @@ export default function Home() {
               </div>
 
               <div className="field">
-                <span>Feel / direction</span>
+                <span>Feel <small>Select up to 5</small></span>
                 <div className="direction-pills">
-                  {directionOptions.filter((option) => !["Open", "Trap", "Drill", "Afro-trap", "Afrobeats", "Afro-R&B", "R&B", "Jersey", "Boom bap"].includes(option)).map((option) => (
-                    <button key={option} type="button" className={beat.feel === option ? "active" : ""} onClick={() => updateBeat("feel", option)}>{option}</button>
+                  {feelOptions.map((option) => (
+                    <button key={option} type="button" className={beat.feels.includes(option) ? "active" : ""} onClick={() => toggleFeel(beat.feels, option, (next) => updateBeat("feels", next))}>{option}</button>
                   ))}
                 </div>
               </div>
@@ -748,7 +771,7 @@ export default function Home() {
                     <div>
                       <p>{beat.genre}</p>
                       <h3>{beat.title || "Untitled beat"}</h3>
-                      <span>{beat.tempo} BPM · {beat.songKey} · {beat.feel}</span>
+                      <span>{beat.tempo} BPM · {beat.songKey} · {beat.feels.join(" · ") || "Open feel"}</span>
                     </div>
                   </div>
                   <audio controls src={beatAudioUrl} className="beat-audio" />

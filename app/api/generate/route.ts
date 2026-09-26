@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 type SongRequest = {
   title: string;
   theme: string;
-  feel?: string;
+  feels?: string[];
+  sound?: string;
   tempo: string;
   songKey: string;
   includeIntro: boolean;
@@ -24,7 +25,9 @@ function buildPrompt(data: SongRequest) {
     .map((section, index) => `${index + 1}. ${section}`)
     .join("\n");
 
-  const feel = data.feel?.trim() || "Open";
+  const feels = Array.isArray(data.feels) ? data.feels.filter(Boolean).slice(0, 5) : [];
+  const feel = feels.length ? feels.join(", ") : "Open";
+  const sound = data.sound?.trim() || "Trap";
 
   return `Write an original song for Eboi, a Nigerian Christian rap artist. Eboi's writing identity blends melodic trap instincts with reflective, cadence-led rap. The result should feel musical, fluid, personal, confident and performance-ready, while remaining unmistakably Eboi.
 
@@ -33,6 +36,7 @@ Title: ${data.title}
 Tempo: ${data.tempo} BPM
 Theme: ${data.theme}
 Feel / direction: ${feel}
+Sound / genre: ${sound}
 Key: ${data.songKey}
 
 STRUCTURE
@@ -58,14 +62,15 @@ EBOI WRITING AND FLOW DIRECTION
 
 STYLE REQUIREMENTS
 - Write fully original lyrics. Do not imitate or copy any specific artist, song, melody, lyrics, signature phrases, or recognisable lyrical mannerisms.
-- Let the selected feel / direction shape the energy, word choice, cadence, imagery, hook delivery and emotional tone across the whole song.
+- Let all selected feel directions work together to shape energy, word choice, cadence, imagery, hook delivery and emotional tone across the whole song.
+- Let the selected sound / genre shape rhythmic pocket, cadence expectations and hook approach without forcing production details into the lyrics.
 - Write melodic hooks with one catchy repeatable anchor line when the song direction supports it.
 - Prioritise pocket, flow, melody, internal rhyme, emotional clarity and repeatable phrasing over packing new information into every line.
 - State the Christian faith message clearly while keeping the writing confident and natural rather than preachy.
 - Use only a little Nigerian Pidgin where it fits naturally.
 - Avoid worn-out worship clichés and generic church language.
 - Keep hooks simple enough to remember after one or two listens.
-- Let the title, theme and selected feel influence the central phrase and recurring imagery.
+- Let the title, theme, selected feels and sound influence the central phrase and recurring imagery.
 - Keep line lengths performance-friendly. Avoid long prose-like bars.
 - Use tasteful ad-libs in brackets only where they help the pocket.
 

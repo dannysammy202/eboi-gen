@@ -6,7 +6,7 @@ type BeatGuideRequest = {
   genre: string;
   tempo: string;
   songKey: string;
-  feel: string;
+  feels: string[];
   drumStyle: string;
   bassStyle: string;
   melodyStyle: string;
@@ -217,7 +217,7 @@ Title: ${data.title || "Untitled beat"}
 Genre / sound: ${data.genre}
 Tempo: ${data.tempo} BPM
 Key: ${data.songKey}
-Feel / direction: ${data.feel}
+Feel / direction: ${Array.isArray(data.feels) && data.feels.length ? data.feels.slice(0, 5).join(", ") : "Open"}
 Drum style: ${data.drumStyle}
 Bass style: ${data.bassStyle}
 Melody style: ${data.melodyStyle}
