@@ -15,6 +15,22 @@ type ThemeIdea = {
   angle: string;
 };
 
+const themeSchema = {
+  type: "array",
+  minItems: 5,
+  maxItems: 5,
+  items: {
+    type: "object",
+    properties: {
+      name: { type: "string", description: "Short concept name, 2 to 5 words." },
+      theme: { type: "string", description: "One or two sentences describing what the full song is about." },
+      angle: { type: "string", description: "Short phrase describing the emotional or lyrical angle." },
+    },
+    required: ["name", "theme", "angle"],
+    additionalProperties: false,
+  },
+};
+
 function cleanJson(text: string) {
   return text
     .trim()
@@ -74,7 +90,15 @@ async function generateWithFallback(ai: GoogleGenAI, contents: string) {
         const response = await ai.models.generateContent({
           model,
           contents,
-          config: { maxOutputTokens: 1600 },
+          config: {
+            maxOutputTokens: 2000,
+            responseFormat: {
+              text: {
+                mimeType: "application/json",
+                schema: themeSchema,
+              },
+            },
+          },
         });
         return { response, model };
       } catch (error) {
@@ -148,7 +172,7 @@ Requirements:
 - Make each theme specific enough to guide a full song.
 - Do not imitate any living artist's exact lyrical style.
 
-Return JSON only, with no markdown and no commentary, using this exact shape:
+Return exactly five theme objects matching this structure:
 [
   {
     "name": "short concept name, 2 to 5 words",
