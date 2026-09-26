@@ -7,7 +7,7 @@ type BeatRequest = {
   genre: string;
   tempo: string;
   songKey: string;
-  feel: string;
+  feels: string[];
   drumStyle: string;
   bassStyle: string;
   melodyStyle: string;
@@ -37,7 +37,7 @@ Title / working name: ${data.title || "Untitled beat"}
 Genre / sound: ${data.genre}
 Tempo: ${data.tempo} BPM
 Key: ${data.songKey}
-Feel / direction: ${data.feel}
+Feel / direction: ${Array.isArray(data.feels) && data.feels.length ? data.feels.slice(0, 5).join(", ") : "Open"}
 Drums: ${data.drumStyle}
 Bass: ${data.bassStyle}
 Melody: ${data.melodyStyle}
@@ -48,7 +48,7 @@ REQUIREMENTS
 - Instrumental only. No vocals, spoken words, chants, humming, toplines, or lyrics.
 - Keep enough open space for a rapper or melodic vocalist to perform over it later.
 - Keep the groove locked to ${data.tempo} BPM and centre the harmony around ${data.songKey}.
-- Let the selected genre, feel, drum style, bass style, and melody style shape the production.
+- Let the selected genre define the primary musical lane. Let all selected feels work together to shape mood, energy, texture and arrangement. Let the drum style, bass style and melody style refine the production.
 - Use original musical material. Do not copy any existing song, beat, producer tag, melody, or recognisable artist-specific production.
 - Build clear sections and transitions rather than one loop repeating unchanged.
 - Make the low end controlled and leave headroom for future vocals.
