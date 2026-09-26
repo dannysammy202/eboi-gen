@@ -178,17 +178,29 @@ export default function BeatGuidePanel({ beat }: { beat: BeatForm }) {
     setCopied(false);
 
     try {
-      const response = await fetch("/api/beat-guide", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(beat),
-      });
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 45000);
+      let response: Response;
+      try {
+        response = await fetch("/api/beat-guide", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(beat),
+          signal: controller.signal,
+        });
+      } finally {
+        window.clearTimeout(timeout);
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Production guide generation failed.");
       setGuide(data.guide);
       setModel(data.model || "Gemini");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Production guide generation failed.");
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("The production guide took too long to generate. Please try again.");
+      } else {
+        setError(err instanceof Error ? err.message : "Production guide generation failed.");
+      }
     } finally {
       setLoading(false);
     }
