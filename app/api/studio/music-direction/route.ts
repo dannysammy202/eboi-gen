@@ -49,7 +49,6 @@ export async function POST(request: Request) {
       ai,
       prompt,
       maxOutputTokens: 900,
-      temperature: 0.45,
       validate: validDirection,
     });
     return NextResponse.json({ ...value, model });
