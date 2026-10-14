@@ -171,10 +171,10 @@ function addScriptureDirection(){
  const exit=$("#concept-section [data-page='structure']");
  exit?.addEventListener("click",(event)=>{if(!applyScriptureSong()){event.preventDefault();event.stopImmediatePropagation();}},true);
  $("#concept-section").hidden=true;
- const clearAnalysis=()=>{scriptureConcept=null;$("#concept-section").hidden=true;const aside=$("#page-scripture .asidecard");if(aside)aside.hidden=true;$("#scripture-ai-result")?.replaceChildren();};
+ const clearAnalysis=()=>{scriptureConcept=null;$("#concept-section").hidden=true;const aside=$("#page-scripture .asidecard");if(aside)aside.hidden=true;$("#scripture-passage-placeholder")?.removeAttribute("hidden");$("#page-scripture .verse")?.setAttribute("hidden","");$("#scripture-ai-result")?.replaceChildren();};
  $("#theme-text")?.addEventListener("input",clearAnalysis);
  $("#verse-ref")?.addEventListener("input",clearAnalysis);
- $("[data-smode]").forEach(el=>el.addEventListener("click",clearAnalysis));
+ $$("[data-smode]").forEach(el=>el.addEventListener("click",clearAnalysis));
  recommend.addEventListener("click",async()=>{
   const verse=$(".scripturemode [data-smode='verse']")?.classList.contains("active");
   const text=verse?$("#verse-ref")?.value.trim():$("#theme-text")?.value.trim();
@@ -206,7 +206,7 @@ function addScriptureDirection(){
 }
 function addScriptureAI(){
  let primary=$("#passage-btn");if(!primary)return;
- const clean=primary.cloneNode(true);primary.replaceWith(clean);primary=clean;primary.textContent="Analyse Scripture with Gemini";
+ const clean=primary.cloneNode(true);primary.replaceWith(clean);primary=clean;primary.disabled=true;primary.textContent="Analyse Scripture with Gemini";
  const out=document.createElement("div");out.id="scripture-ai-result";out.className="studio-ai-results";primary.after(out);
  const aside=$("#page-scripture .asidecard");
  primary.addEventListener("click",async()=>{
@@ -214,7 +214,7 @@ function addScriptureAI(){
   const payload={mode:verse?"verse":"theme",reference:$("#verse-ref")?.value,theme:$("#theme-text")?.value};
   if(!(verse?payload.reference:payload.theme)?.trim()){show("Enter a Scripture reference or song theme.","error");return}
   loadButton(primary,true);
-  scriptureConcept=null;$("#concept-section").hidden=true;if(aside)aside.hidden=true;out.replaceChildren();
+  scriptureConcept=null;$("#concept-section").hidden=true;if(aside)aside.hidden=true;$("#scripture-passage-placeholder")?.removeAttribute("hidden");$("#page-scripture .verse")?.setAttribute("hidden","");out.replaceChildren();
   try{
    const d=await request("/api/studio/scripture",payload);scriptureConcept=d;out.replaceChildren();
    const card=document.createElement("article");card.className="studio-ai-result";
@@ -240,15 +240,17 @@ function addScriptureAI(){
    if(attribution)attribution.textContent="Song theme · Not a Bible quotation";
    if(aside){
     aside.hidden=false;
-    const descriptions=$("p",aside);if(descriptions[0])descriptions[0].textContent=d.insight;
+    const descriptions=$$("p",aside);if(descriptions[0])descriptions[0].textContent=d.insight;
     if(descriptions[1])descriptions[1].textContent=d.concept;
    }
    syncScriptureSummary();
+   $("#scripture-passage-placeholder")?.setAttribute("hidden","");$("#page-scripture .verse")?.removeAttribute("hidden");
    proposed?.scrollIntoView({behavior:"smooth",block:"center"});
    show("Scripture context and song concept ready.");
   }catch(e){show(e.message||"Scripture analysis failed.","error")}
   finally{loadButton(primary,false,"Analyse Scripture with Gemini")}
  });
+ primary.disabled=false;
 }
 let audioUrl=null;
 function addBeatAI(){const text=$("#beat-prompt");if(!text)return;const wrap=document.createElement("div");wrap.className="studio-ai-tool";wrap.innerHTML='<div class="studio-ai-head"><strong>AI beat generation</strong><span>Lyria · original instrumentals</span></div><div class="row-buttons" id="ai-beat-actions"></div><div id="ai-beat-result" class="studio-ai-results" aria-live="polite"></div>';text.after(wrap);const actions=$("#ai-beat-actions");actions.append(button("30-second beat preview",()=>beat("preview"),"btn primary"),button("Generate full instrumental",()=>beat("full")),button("Generate BandLab guide",guide));}
@@ -262,10 +264,26 @@ function loadProject(rec){const curr=localStorage.getItem(activeKey);if(curr)sav
 function freshProject(){const initial={lyrics:{hook1:"",verse1:"",verse2:"",bridge:""},notes:"",beat:"",vocalNotes:"",structure:{verses:2,hooks:2,start:"hook",intro:false,outro:false,bridge:false,bpm:132,order:[],bars:{}},versions:[]};const id=localStorage.getItem(activeKey);if(id)saveProject(false,true);localStorage.setItem(storageKey,JSON.stringify(initial));localStorage.removeItem(activeKey);localStorage.removeItem("eboi-studio-scripture-ref");sessionStorage.removeItem("eboi-next-project");location.href="/studio.html?view=create&fresh=1";}
 function renderLibrary(){const parent=$("#library-results");if(!parent)return;parent.replaceChildren();const query=($("#library-search")?.value||"").toLowerCase().trim();const records=archive().filter(x=>(x.title+" "+x.form?.about).toLowerCase().includes(query));for(const p of records){const row=document.createElement("div");row.className="surface studio-project-card";const info=document.createElement("div");const h=document.createElement("h3");h.textContent=p.title;const meta=document.createElement("p");meta.textContent=(p.form?.bpm||"136")+" BPM · "+(p.form?.sound||"Melodic trap")+" · "+new Date(p.savedAt).toLocaleDateString("en-GB");info.append(h,meta);const actions=document.createElement("div");actions.className="row-buttons";actions.append(button("Open",()=>loadProject(p),"btn primary"),button("Export",()=>downloadFile(JSON.stringify(p,null,2),p.title+"-project.json","application/json")),button("Delete",()=>confirmStudio("Delete this project?","This removes the local copy of "+p.title+". Export a backup first if needed.","Delete",()=>{write(projectsKey,archive().filter(x=>x.id!==p.id));renderLibrary();show("Local project deleted.")})));row.append(info,actions);parent.append(row)}const empty=$("#library-empty");if(empty)empty.hidden=records.length!==0;const dashboard=$(".projects");if(dashboard){dashboard.replaceChildren();for(const p of archive().slice(0,3)){const b=button(p.title+"  ·  "+(p.form?.sound||"Melodic trap"),()=>loadProject(p),"surface project");dashboard.append(b)}if(!dashboard.children.length){const p=document.createElement("p");p.textContent="No saved songs yet. Start your first project.";dashboard.append(p)}}}
 function addProjects(){const heading=$("#page-workspace .pagehead");if(!heading)return;const actions=document.createElement("div");actions.className="row-buttons studio-project-actions";actions.append(button("Save project",()=>saveProject()),button("Save as new",()=>saveProject(true)),button("New song",()=>confirmStudio("Start a new song?","Your current changes will remain available in your saved projects if you save first.","Start new",freshProject),"btn primary"));heading.append(actions);const library=$("#page-library .pagehead");if(library){const extra=document.createElement("div");extra.className="row-buttons";extra.append(button("Export full library",()=>downloadFile(JSON.stringify(archive(),null,2),"eboi-studio-projects-backup.json","application/json")));const fileInput=document.createElement("input");fileInput.type="file";fileInput.accept="application/json,.json";fileInput.style.display="none";fileInput.addEventListener("change",async()=>{const file=fileInput.files?.[0];if(!file)return;try{const parsed=JSON.parse(await file.text()),entries=Array.isArray(parsed)?parsed:[parsed];if(entries.some(x=>!x?.title||!x.db||!x.form))throw new Error("This is not a valid Eboi Studio project backup.");const merged=[...archive()];for(const e of entries){e.id=e.id||crypto.randomUUID();const i=merged.findIndex(x=>x.id===e.id);if(i>=0)merged[i]=e;else merged.push(e)}write(projectsKey,merged.slice(0,100));renderLibrary();show("Project backup imported.")}catch(e){show(e.message||"Import failed.","error")}fileInput.value=""});extra.append(button("Import project",()=>fileInput.click()));extra.append(fileInput);library.append(extra)}$("#library-search")?.addEventListener("input",renderLibrary);$$("[data-status]").forEach(b=>b.addEventListener("click",()=>setTimeout(renderLibrary,10)));renderLibrary();}
-function initialise(){addSongKey();addMusicDirection();addScriptureDirection();addLyricsAI();addThemeAI();addScriptureAI();addBeatAI();addProjects();
+function initialise(){
+ const features=[
+  ["Musical key",addSongKey],
+  ["Music direction",addMusicDirection],
+  ["Scripture options",addScriptureDirection],
+  ["Lyrics AI",addLyricsAI],
+  ["Song themes",addThemeAI],
+  ["Scripture AI",addScriptureAI],
+  ["Beat AI",addBeatAI],
+  ["Song library",addProjects]
+ ];
+ const failed=[];
+ for(const [name,setup] of features){
+  try{setup()}catch(err){failed.push(name);console.error("Eboi Studio: failed to initialize "+name,err);}
+ }
+ if(failed.length)show("Some studio tools could not load: "+failed.join(", ")+". Please reload.","error");
+ if($("#passage-btn")?.disabled)show("Scripture analysis is unavailable. Please reload the studio.","error");
  const classic=document.createElement("a");classic.className="navbtn";classic.href="/classic";classic.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-spark"></use></svg><span class="navtext">Classic AI tools</span>';$(".sidebar .navsection:last-of-type")?.append(classic);
  const stage=$("#page-dashboard .hero");if(stage){const badge=$(".eyebrow",stage);if(badge)badge.textContent="Your music production house";}
- const form=read("eboi-next-form",null)||JSON.parse(sessionStorage.getItem("eboi-next-project")||"null");if(form){sessionStorage.removeItem("eboi-next-project");if($("#idea-title"))$("#idea-title").value=form.title||"";if($("#idea-about"))$("#idea-about").value=form.about||"";if($("#idea-bpm"))$("#idea-bpm").value=form.bpm||"136";if($("#studio-song-key"))$("#studio-song-key").value=form.key||"F minor";$("#idea-bpm")?.dispatchEvent(new Event("input",{bubbles:true}));$("#idea-title")?.dispatchEvent(new Event("input",{bubbles:true}));syncKeyOnScreen();if($("#scripture-key"))$("#scripture-key").value=$("#studio-song-key")?.value||"F minor";syncScriptureSummary();if(form.sound){const picker=$("#idea-sound");picker?.click();const match=$("#idea-sound-options [role=option]").find(x=>x.dataset.value?.toLowerCase()===form.sound.toLowerCase());match?.click()}}
+ const form=read("eboi-next-form",null)||JSON.parse(sessionStorage.getItem("eboi-next-project")||"null");if(form){sessionStorage.removeItem("eboi-next-project");if($("#idea-title"))$("#idea-title").value=form.title||"";if($("#idea-about"))$("#idea-about").value=form.about||"";if($("#idea-bpm"))$("#idea-bpm").value=form.bpm||"136";if($("#studio-song-key"))$("#studio-song-key").value=form.key||"F minor";$("#idea-bpm")?.dispatchEvent(new Event("input",{bubbles:true}));$("#idea-title")?.dispatchEvent(new Event("input",{bubbles:true}));syncKeyOnScreen();if($("#scripture-key"))$("#scripture-key").value=$("#studio-song-key")?.value||"F minor";syncScriptureSummary();if(form.sound){const picker=$("#idea-sound");picker?.click();const match=$$("#idea-sound-options [role=option]").find(x=>x.dataset.value?.toLowerCase()===form.sound.toLowerCase());match?.click()}}
  const query=new URLSearchParams(location.search),view=query.get("view");if(view==="workspace")go("workspace");else if(view==="create"){$('[data-method="idea"]')?.click();go("create")}else if(view==="library")go("library");
  let latest="";setInterval(()=>{const id=localStorage.getItem(activeKey);if(!id)return;const record=snapshot(),str=JSON.stringify(record.db)+"|"+JSON.stringify(record.form);if(latest===str)return;latest=str;saveProject(false,true)},4000);
 }
