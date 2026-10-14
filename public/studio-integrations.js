@@ -8,7 +8,7 @@ const esc=(s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":
 const button=(label,click,cls="btn ghost")=>{const b=document.createElement("button");b.type="button";b.className=cls;b.textContent=label;b.addEventListener("click",click);return b;};
 const show=(message,kind="ok")=>{let bar=$("#integration-toast");if(!bar){bar=document.createElement("div");bar.id="integration-toast";bar.setAttribute("role","status");document.body.append(bar)}bar.textContent=message;bar.dataset.kind=kind;bar.classList.add("show");clearTimeout(window.__integrationTimer);window.__integrationTimer=setTimeout(()=>bar.classList.remove("show"),4500)};
 const loadButton=(b,on,label)=>{if(!b)return;b.disabled=on;b.textContent=on?"Working with Gemini...":label};
-const request=async(url,payload,audio=false)=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),55000);try{const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal:controller.signal});if(!r.ok){const err=await r.json().catch(()=>({error:"Request failed."}));throw new Error(err.error||"The service is unavailable.")}return audio?r.blob():r.json()}finally{clearTimeout(timer)}};
+const request=async(url,payload,audio=false)=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),55000);try{const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal:controller.signal});if(!r.ok){const err=await r.json().catch(()=>({error:"Request failed."}));throw new Error(typeof err.error==="string"?err.error:"The AI service is temporarily unavailable. Please try again.")}return audio?r.blob():r.json()}finally{clearTimeout(timer)}};
 const settings=()=>read("eboi-studio-prototype-b03",{});
 const title=()=>$("#idea-title")?.value?.trim()||$("#release-title")?.value?.trim()||"Untitled song";
 const genre=(id,fallback)=>$("#"+id+" .ui-picker-single")?.textContent?.trim()||$("#"+id+" .ui-picker-value")?.textContent?.trim()||fallback;
@@ -247,7 +247,19 @@ function addScriptureAI(){
    $("#scripture-passage-placeholder")?.setAttribute("hidden","");$("#page-scripture .verse")?.removeAttribute("hidden");
    proposed?.scrollIntoView({behavior:"smooth",block:"center"});
    show("Scripture context and song concept ready.");
-  }catch(e){show(e.message||"Scripture analysis failed.","error")}
+  }catch(e){
+   const raw=e instanceof Error?e.message:"Scripture analysis is unavailable.";
+   const message=raw.trim()&&raw.length<400&&!raw.includes('{"error"')?raw:"Gemini is temporarily unavailable. Please try again shortly.";
+   out.replaceChildren();
+   const card=document.createElement("article");card.className="studio-ai-result studio-ai-error";
+   card.setAttribute("role","alert");
+   const heading=document.createElement("h3");heading.textContent="Scripture analysis couldn't finish";
+   const detail=document.createElement("p");detail.textContent=message;
+   const retry=button("Try again",()=>primary.click(),"btn ghost");
+   card.append(heading,detail,retry);
+   out.append(card);
+   show("Scripture analysis is temporarily unavailable. See the message below.","error");
+  }
   finally{loadButton(primary,false,"Analyse Scripture with Gemini")}
  });
  primary.disabled=false;

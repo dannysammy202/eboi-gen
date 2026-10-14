@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { generateStudioJson, studioGeminiResponse } from "../../../../lib/studio-gemini";
 
 export const maxDuration = 60;
 
@@ -40,22 +41,24 @@ export async function POST(request: Request) {
       'Return JSON only, of shape {"sections":[{"id":"hook1","lyrics":"line one\\nline two"}]}. Include exactly the requested section ids and no others.'
     ].filter(Boolean).join("\n\n");
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const models = [...new Set([process.env.GEMINI_MODEL || "gemini-3.7-flash", "gemini-3.6-flash"])];
-    let lastError = "";
-    for (const model of models) {
-      try {
-        const output = await ai.models.generateContent({ model, contents: prompt, config: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.85 } });
-        const raw = output.text?.trim();
-        if (!raw) throw new Error("No lyrics returned.");
-        const parsed = JSON.parse(raw) as { sections?: Array<{ id: string; lyrics: string }> };
-        if (!Array.isArray(parsed.sections)) throw new Error("Invalid lyrics format.");
-        const result = specs.map(s => ({ id: s.id, lyrics: safe(parsed.sections?.find(x => x.id === s.id)?.lyrics, 10000) }));
-        if (result.some(s => !s.lyrics)) throw new Error("One or more song sections were missing.");
-        return NextResponse.json({ sections: result, model });
-      } catch (err) { lastError = err instanceof Error ? err.message : String(err); }
-    }
-    return NextResponse.json({ error: "Song generation failed: " + lastError }, { status: 502 });
+    const { value, model } = await generateStudioJson({
+      ai,
+      prompt,
+      maxOutputTokens: 8192,
+      validate: (parsed: unknown): Array<{ id: string; lyrics: string }> | null => {
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+        const all = (parsed as { sections?: unknown }).sections;
+        if (!Array.isArray(all)) return null;
+        const validated = specs.map(s => {
+          const section = all.find(x => x && typeof x === "object" && (x as { id?: unknown }).id === s.id) as { lyrics?: unknown } | undefined;
+          return { id: s.id, lyrics: typeof section?.lyrics === "string" ? safe(section.lyrics, 10000) : "" };
+        });
+        return validated.every(s => s.lyrics) ? validated : null;
+      },
+    });
+    return NextResponse.json({ sections: value, model });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Unable to generate lyrics." }, { status: 500 });
+    const response = studioGeminiResponse(err);
+    return NextResponse.json(response.body, { status: response.status });
   }
 }
