@@ -20,6 +20,74 @@ const statusPanel=(target)=>{let b=$(".studio-integration-status",target);if(!b)
 function confirmStudio(heading,detail,action,onConfirm){const overlay=document.createElement("div");overlay.className="integration-modal";overlay.setAttribute("role","presentation");overlay.innerHTML='<div class="integration-dialog" role="dialog" aria-modal="true" aria-labelledby="integration-modal-title"><h2 id="integration-modal-title"></h2><p></p><div class="row-buttons" style="justify-content:flex-end;margin-top:20px"></div></div>';$(".integration-dialog h2",overlay).textContent=heading;$(".integration-dialog p",overlay).textContent=detail;const controls=$(".row-buttons",overlay),close=()=>overlay.remove();controls.append(button("Cancel",close),button(action,()=>{close();onConfirm()},"btn primary"));overlay.addEventListener("pointerdown",e=>{if(e.target===overlay)close()});document.body.append(overlay);$(".integration-dialog button",overlay)?.focus();}
 function plan(){const shape=window.eboiStructure?.()||{sections:[],bpm:bpm()};const db=settings();const d=db.director||{};return {title:title(),theme:$("#idea-about")?.value?.trim()||"Faith, purpose and real life in a melodic trap record.",bpm:bpm(),key:$("#studio-song-key")?.value||"F minor",sound:genre("idea-sound","Melodic trap"),feels:(localStorage.getItem("eboi-studio-scripture-ref")&&feels("scripture-feel").length)?feels("scripture-feel"):feels("idea-energy").length?feels("idea-energy"):["Smooth","Energetic"],scripture:localStorage.getItem("eboi-studio-scripture-ref")||"",sections:(shape.sections||[]).map(s=>({id:s.id,title:s.title,bars:s.bars,phrasing:d.phrasing?.[s.id]||2,delivery:d.delivery?.[s.id]||(s.id.startsWith("hook")?"Smooth melodic":"Rhythmic rap"),intent:d.intent?.[s.id]||""}))}};
 function addSongKey(){const bpmField=$("#idea-bpm")?.closest(".field");if(!bpmField||$("#studio-song-key"))return;const keyField=document.createElement("div");keyField.className="field";keyField.innerHTML='<label for="studio-song-key">Key</label><input id="studio-song-key" value="F minor" placeholder="e.g. F minor" autocomplete="off">';bpmField.parentElement?.append(keyField);try{keyField.querySelector("input").value=sessionStorage.getItem("eboi-song-key")||"F minor"}catch{}keyField.querySelector("input").addEventListener("input",e=>sessionStorage.setItem("eboi-song-key",e.target.value));}
+
+const studioRoots=["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
+const studioKeys=studioRoots.flatMap(root=>[root+" minor",root+" major"]);
+function chosenKey(){return $("#studio-song-key")?.value.trim()||"F minor";}
+function syncKeyOnScreen(){
+ const key=chosenKey();
+ const spans=$$("#page-workspace .workspace-meta span");
+ if(spans[3])spans[3].textContent=key;
+ const beatInfo=$("#tab-beat .bpm-big span");if(beatInfo)beatInfo.textContent="BPM / "+key;
+ const beatTag=$("#tab-beat .beat-hero .tag-row .tiny-tag");if(beatTag)beatTag.textContent=key;
+ const chordTag=$("#tab-beat .beat-hero .tag-row .tiny-tag:nth-child(2)");
+ if(chordTag)chordTag.textContent="Chords matched to key";
+ const productionKey=$("#tab-production .mix-master span:last-child");if(productionKey)productionKey.textContent=key;
+ $$("#page-workspace .detail, #tab-production .specrow").forEach(row=>{if(row.querySelector("span")?.textContent?.trim()==="Key"||row.querySelector("span")?.textContent?.trim()==="Key / Scale"){const val=row.querySelector("strong");if(val)val.textContent=key;}});
+}
+function selectStudioKey(value){
+ if(!studioKeys.includes(value))return;
+ const input=$("#studio-song-key");if(!input)return;
+ input.value=value;sessionStorage.setItem("eboi-song-key",value);
+ input.dispatchEvent(new Event("input",{bubbles:true}));
+ show("Musical key set to "+value+".");
+}
+function openKeyChooser(){
+ const overlay=document.createElement("div");overlay.className="integration-modal";
+ overlay.innerHTML='<div class="integration-dialog music-key-dialog" role="dialog" aria-modal="true" aria-labelledby="studio-key-title"><h2 id="studio-key-title">Choose a musical key</h2><p>Choose any major or minor key. You can also type another key into the field.</p><div class="music-key-tabs" role="group" aria-label="Key scale"><button type="button" class="btn primary" data-scale="minor">Minor</button><button type="button" class="btn ghost" data-scale="major">Major</button></div><div class="music-key-grid" id="music-key-grid"></div><div class="row-buttons" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" type="button" id="close-studio-key">Close</button></div></div>';
+ const close=()=>overlay.remove();
+ $("#close-studio-key",overlay).addEventListener("click",close);
+ overlay.addEventListener("pointerdown",e=>{if(e.target===overlay)close()});
+ const grid=$("#music-key-grid",overlay);
+ const render=scale=>{grid.replaceChildren();$$("[data-scale]",overlay).forEach(b=>{const on=b.dataset.scale===scale;b.classList.toggle("primary",on);b.classList.toggle("ghost",!on);});
+ for(const root of studioRoots){const value=root+" "+scale,option=button(value,()=>{selectStudioKey(value);close()},"music-key-choice");option.setAttribute("aria-pressed",String(chosenKey()===value));grid.append(option);}};
+ $$("[data-scale]",overlay).forEach(b=>b.addEventListener("click",()=>render(b.dataset.scale)));
+ document.body.append(overlay);render(chosenKey().endsWith("major")?"major":"minor");$("#close-studio-key",overlay).focus();
+}
+function addMusicDirection(){
+ const form=$("#idea-form"),bpmField=$("#idea-bpm")?.closest(".field"),keyInput=$("#studio-song-key");
+ if(!form||!bpmField||!keyInput)return;
+ const label=bpmField.querySelector("label");if(label)label.textContent="Tempo (BPM)";
+ bpmField.insertAdjacentHTML("beforeend",'<p class="music-direction-help">Enter your tempo, or get a recommendation below.</p>');
+ keyInput.addEventListener("input",()=>{sessionStorage.setItem("eboi-song-key",keyInput.value);syncKeyOnScreen();});
+ const choose=button("Choose key",openKeyChooser,"btn ghost music-select-key");keyInput.after(choose);
+ const box=document.createElement("section");box.className="studio-ai-tool music-direction";box.id="studio-music-direction";
+ box.innerHTML='<div class="studio-ai-head"><strong>Tempo & musical key</strong><span>AI suggestions · Your choice</span></div><p class="music-direction-help">Recommendations are based on your song concept, sound and selected feelings. You can keep your own settings.</p><div class="row-buttons" id="music-direction-actions"></div><div class="studio-ai-results" id="music-direction-result" aria-live="polite"></div>';
+ const proceed=form.querySelector('[data-page="structure"]');if(proceed)proceed.before(box);else form.append(box);
+ const actions=$("#music-direction-actions",box),result=$("#music-direction-result",box);
+ const recommend=button("Suggest tempo & key",async()=>{
+  const songTitle=$("#idea-title")?.value.trim(),theme=$("#idea-about")?.value.trim();
+  if(!songTitle&&!theme){show("Add a title or song concept first.","error");return;}
+  loadButton(recommend,true);
+  try{
+   const d=await request("/api/studio/music-direction",{title:songTitle,theme,sound:genre("idea-sound","Melodic trap"),feels:feels("idea-energy")});
+   result.replaceChildren();
+   const card=document.createElement("div");card.className="studio-ai-result music-recommendation";
+   const header=document.createElement("div");header.className="music-recommendation-top";
+   const tempo=document.createElement("div");tempo.innerHTML='<small>Suggested tempo</small><strong></strong>';tempo.querySelector("strong").textContent=d.bpm+" BPM";
+   const key=document.createElement("div");key.innerHTML='<small>Suggested key</small><strong></strong>';key.querySelector("strong").textContent=d.key;header.append(tempo,key);
+   const reason=document.createElement("p");reason.textContent=d.reason;
+   const controls=document.createElement("div");controls.className="row-buttons music-recommendation-buttons";
+   const useTempo=button("Use "+d.bpm+" BPM",()=>{$("#idea-bpm").value=String(d.bpm);$("#idea-bpm").dispatchEvent(new Event("input",{bubbles:true}));show("Tempo updated to "+d.bpm+" BPM.")},"btn ghost");
+   const useKey=button("Use "+d.key,()=>selectStudioKey(d.key),"btn ghost");
+   const useBoth=button("Use both",()=>{$("#idea-bpm").value=String(d.bpm);$("#idea-bpm").dispatchEvent(new Event("input",{bubbles:true}));selectStudioKey(d.key)},"btn primary");
+   controls.append(useTempo,useKey,useBoth);card.append(header,reason,controls);result.append(card);
+  }catch(e){show(e.message||"Recommendations are unavailable. Choose your BPM and key manually.","error");}
+  finally{loadButton(recommend,false,"Suggest tempo & key")}
+ },"btn ghost");
+ actions.append(recommend);
+ syncKeyOnScreen();
+}
 function addLyricsAI(){
  const actions=$("#save-lyrics-v2")?.parentElement;if(!actions)return;
  const all=button("Generate full lyrics with AI",()=>generateLyrics(null),"btn primary");
@@ -62,7 +130,7 @@ function loadProject(rec){const curr=localStorage.getItem(activeKey);if(curr)sav
 function freshProject(){const initial={lyrics:{hook1:"",verse1:"",verse2:"",bridge:""},notes:"",beat:"",vocalNotes:"",structure:{verses:2,hooks:2,start:"hook",intro:false,outro:false,bridge:false,bpm:132,order:[],bars:{}},versions:[]};const id=localStorage.getItem(activeKey);if(id)saveProject(false,true);localStorage.setItem(storageKey,JSON.stringify(initial));localStorage.removeItem(activeKey);localStorage.removeItem("eboi-studio-scripture-ref");sessionStorage.removeItem("eboi-next-project");location.href="/studio.html?view=create&fresh=1";}
 function renderLibrary(){const parent=$("#library-results");if(!parent)return;parent.replaceChildren();const query=($("#library-search")?.value||"").toLowerCase().trim();const records=archive().filter(x=>(x.title+" "+x.form?.about).toLowerCase().includes(query));for(const p of records){const row=document.createElement("div");row.className="surface studio-project-card";const info=document.createElement("div");const h=document.createElement("h3");h.textContent=p.title;const meta=document.createElement("p");meta.textContent=(p.form?.bpm||"136")+" BPM · "+(p.form?.sound||"Melodic trap")+" · "+new Date(p.savedAt).toLocaleDateString("en-GB");info.append(h,meta);const actions=document.createElement("div");actions.className="row-buttons";actions.append(button("Open",()=>loadProject(p),"btn primary"),button("Export",()=>downloadFile(JSON.stringify(p,null,2),p.title+"-project.json","application/json")),button("Delete",()=>confirmStudio("Delete this project?","This removes the local copy of "+p.title+". Export a backup first if needed.","Delete",()=>{write(projectsKey,archive().filter(x=>x.id!==p.id));renderLibrary();show("Local project deleted.")})));row.append(info,actions);parent.append(row)}const empty=$("#library-empty");if(empty)empty.hidden=records.length!==0;const dashboard=$(".projects");if(dashboard){dashboard.replaceChildren();for(const p of archive().slice(0,3)){const b=button(p.title+"  ·  "+(p.form?.sound||"Melodic trap"),()=>loadProject(p),"surface project");dashboard.append(b)}if(!dashboard.children.length){const p=document.createElement("p");p.textContent="No saved songs yet. Start your first project.";dashboard.append(p)}}}
 function addProjects(){const heading=$("#page-workspace .pagehead");if(!heading)return;const actions=document.createElement("div");actions.className="row-buttons studio-project-actions";actions.append(button("Save project",()=>saveProject()),button("Save as new",()=>saveProject(true)),button("New song",()=>confirmStudio("Start a new song?","Your current changes will remain available in your saved projects if you save first.","Start new",freshProject),"btn primary"));heading.append(actions);const library=$("#page-library .pagehead");if(library){const extra=document.createElement("div");extra.className="row-buttons";extra.append(button("Export full library",()=>downloadFile(JSON.stringify(archive(),null,2),"eboi-studio-projects-backup.json","application/json")));const fileInput=document.createElement("input");fileInput.type="file";fileInput.accept="application/json,.json";fileInput.style.display="none";fileInput.addEventListener("change",async()=>{const file=fileInput.files?.[0];if(!file)return;try{const parsed=JSON.parse(await file.text()),entries=Array.isArray(parsed)?parsed:[parsed];if(entries.some(x=>!x?.title||!x.db||!x.form))throw new Error("This is not a valid Eboi Studio project backup.");const merged=[...archive()];for(const e of entries){e.id=e.id||crypto.randomUUID();const i=merged.findIndex(x=>x.id===e.id);if(i>=0)merged[i]=e;else merged.push(e)}write(projectsKey,merged.slice(0,100));renderLibrary();show("Project backup imported.")}catch(e){show(e.message||"Import failed.","error")}fileInput.value=""});extra.append(button("Import project",()=>fileInput.click()));extra.append(fileInput);library.append(extra)}$("#library-search")?.addEventListener("input",renderLibrary);$$("[data-status]").forEach(b=>b.addEventListener("click",()=>setTimeout(renderLibrary,10)));renderLibrary();}
-function initialise(){addSongKey();addLyricsAI();addThemeAI();addScriptureAI();addBeatAI();addProjects();
+function initialise(){addSongKey();addMusicDirection();addLyricsAI();addThemeAI();addScriptureAI();addBeatAI();addProjects();
  const classic=document.createElement("a");classic.className="navbtn";classic.href="/classic";classic.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-spark"></use></svg><span class="navtext">Classic AI tools</span>';$(".sidebar .navsection:last-of-type")?.append(classic);
  const stage=$("#page-dashboard .hero");if(stage){const badge=$(".eyebrow",stage);if(badge)badge.textContent="Your music production house";}
  const form=read("eboi-next-form",null)||JSON.parse(sessionStorage.getItem("eboi-next-project")||"null");if(form){sessionStorage.removeItem("eboi-next-project");if($("#idea-title"))$("#idea-title").value=form.title||"";if($("#idea-about"))$("#idea-about").value=form.about||"";if($("#idea-bpm"))$("#idea-bpm").value=form.bpm||"136";if($("#studio-song-key"))$("#studio-song-key").value=form.key||"F minor";$("#idea-bpm")?.dispatchEvent(new Event("input",{bubbles:true}));$("#idea-title")?.dispatchEvent(new Event("input",{bubbles:true}));if(form.sound){const picker=$("#idea-sound");picker?.click();const match=$("#idea-sound-options [role=option]").find(x=>x.dataset.value?.toLowerCase()===form.sound.toLowerCase());match?.click()}}
