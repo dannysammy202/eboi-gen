@@ -171,7 +171,7 @@ function addScriptureDirection(){
  const exit=$("#concept-section [data-page='structure']");
  exit?.addEventListener("click",(event)=>{if(!applyScriptureSong()){event.preventDefault();event.stopImmediatePropagation();}},true);
  $("#concept-section").hidden=true;
- const clearAnalysis=()=>{scriptureConcept=null;$("#concept-section").hidden=true;const aside=$("#page-scripture .asidecard");if(aside)aside.hidden=true;$("#scripture-ai-result")?.replaceChildren();};
+ const clearAnalysis=()=>{scriptureConcept=null;$("#concept-section").hidden=true;const aside=$("#page-scripture .asidecard");if(aside)aside.hidden=true;$("#scripture-passage-placeholder")?.removeAttribute("hidden");$("#page-scripture .verse")?.setAttribute("hidden","");$("#scripture-ai-result")?.replaceChildren();};
  $("#theme-text")?.addEventListener("input",clearAnalysis);
  $("#verse-ref")?.addEventListener("input",clearAnalysis);
  $("[data-smode]").forEach(el=>el.addEventListener("click",clearAnalysis));
@@ -206,7 +206,7 @@ function addScriptureDirection(){
 }
 function addScriptureAI(){
  let primary=$("#passage-btn");if(!primary)return;
- const clean=primary.cloneNode(true);primary.replaceWith(clean);primary=clean;primary.textContent="Analyse Scripture with Gemini";
+ const clean=primary.cloneNode(true);primary.replaceWith(clean);primary=clean;primary.disabled=false;primary.textContent="Analyse Scripture with Gemini";
  const out=document.createElement("div");out.id="scripture-ai-result";out.className="studio-ai-results";primary.after(out);
  const aside=$("#page-scripture .asidecard");
  primary.addEventListener("click",async()=>{
@@ -214,7 +214,7 @@ function addScriptureAI(){
   const payload={mode:verse?"verse":"theme",reference:$("#verse-ref")?.value,theme:$("#theme-text")?.value};
   if(!(verse?payload.reference:payload.theme)?.trim()){show("Enter a Scripture reference or song theme.","error");return}
   loadButton(primary,true);
-  scriptureConcept=null;$("#concept-section").hidden=true;if(aside)aside.hidden=true;out.replaceChildren();
+  scriptureConcept=null;$("#concept-section").hidden=true;if(aside)aside.hidden=true;$("#scripture-passage-placeholder")?.removeAttribute("hidden");$("#page-scripture .verse")?.setAttribute("hidden","");out.replaceChildren();
   try{
    const d=await request("/api/studio/scripture",payload);scriptureConcept=d;out.replaceChildren();
    const card=document.createElement("article");card.className="studio-ai-result";
@@ -244,6 +244,7 @@ function addScriptureAI(){
     if(descriptions[1])descriptions[1].textContent=d.concept;
    }
    syncScriptureSummary();
+   $("#scripture-passage-placeholder")?.setAttribute("hidden","");$("#page-scripture .verse")?.removeAttribute("hidden");
    proposed?.scrollIntoView({behavior:"smooth",block:"center"});
    show("Scripture context and song concept ready.");
   }catch(e){show(e.message||"Scripture analysis failed.","error")}
