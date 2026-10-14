@@ -114,3 +114,9 @@ a.navbtn svg{width:19px;height:19px;stroke:currentColor;fill:none}
 .scripture-passage-placeholder h3{font-size:16px;line-height:1.4;margin-top:9px;color:var(--text)}
 .scripture-passage-placeholder p{font-size:12px;line-height:1.7;color:var(--muted);margin-top:9px}
 #passage-btn:disabled{opacity:.6;cursor:wait}
+
+/* Keep Gemini service errors readable instead of showing raw provider JSON. */
+.studio-ai-error{border-color:#765254;background:#281e23;gap:12px}
+.studio-ai-error h3{color:#f3cdcb;font-size:14px}
+.studio-ai-error p{color:#e4b2b4;overflow-wrap:anywhere;font-size:12px;line-height:1.65}
+.studio-ai-error button{justify-self:start;min-height:39px}
