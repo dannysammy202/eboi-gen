@@ -51,3 +51,33 @@ Import the repository into Vercel, then add these Environment Variables:
 - `GEMINI_MODEL` (optional, defaults to `gemini-3.7-flash`)
 
 The Gemini key stays server-side and never ships to the browser bundle.
+
+
+## Production House workspace (2026)
+
+The home route opens the new production-house interface at /studio.html.
+The previous generator interface remains available at /classic.
+
+The new workspace includes:
+- Dashboard and Song Library with local project archive, save, import and export.
+- Start from an idea, Scripture or instrumental.
+- Custom Feel and Sound controls. Feel supports up to five choices.
+- Song Structure: 1-6 verses, 1-8 hooks, hook-first or verse-first, optional intro/outro/bridge, per-section bar lengths, reorder and duration estimates.
+- Song Workspace, AI-assisted Lyrics, Beat Direction and Lyria generation.
+- Scripture context and creative concept generation through /api/studio/scripture.
+- Vocal Direction and BandLab production hand-off, without microphone recording.
+- Release preparation, settings, custom modals and responsive layouts.
+
+The Scripture and Lyrics APIs require the existing GEMINI_API_KEY, and Lyria generation requires an eligible account/model. Never expose API keys in browser JavaScript.
+
+### Project storage
+
+Song projects and settings currently persist in the browser's localStorage, not a shared cloud database. Use the Song Library's export and import controls for backups and transfers between devices. There is no cross-device sync or authentication in this release. A future cloud data layer must include ownership and access control before enabling server-side project storage.
+
+### Scope
+
+Built-in audio recording and AI mastering are deliberately excluded. Record, edit, mix and master in BandLab or another DAW.
+
+### Rollback
+
+The existing Classic tools remain at /classic. To revert the default experience, restore app/page.tsx from the previous commit. Production APIs remain separate.
