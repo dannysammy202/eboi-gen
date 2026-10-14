@@ -104,3 +104,13 @@ a.navbtn svg{width:19px;height:19px;stroke:currentColor;fill:none}
  #page-scripture .step span{width:18px;min-width:18px;height:18px;font-size:9px}
  #page-scripture .stepbar{flex:0 1 12px;min-width:7px;max-width:12px}
 }
+
+/* Scripture analysis has an explicit empty state; no fake Bible interpretation. */
+#page-scripture .verse[hidden],
+#page-scripture .asidecard[hidden],
+#scripture-passage-placeholder[hidden],
+#concept-section[hidden]{display:none!important}
+.scripture-passage-placeholder{border:1px solid var(--line);border-radius:13px;padding:22px;background:#1b1e25}
+.scripture-passage-placeholder h3{font-size:16px;line-height:1.4;margin-top:9px;color:var(--text)}
+.scripture-passage-placeholder p{font-size:12px;line-height:1.7;color:var(--muted);margin-top:9px}
+#passage-btn:disabled{opacity:.6;cursor:wait}
