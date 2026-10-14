@@ -20,7 +20,10 @@ export class StudioGeminiError extends Error {
 const STABLE_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
 
 export function geminiModels(): string[] {
-  const configured = process.env.GEMINI_MODEL?.trim();
+  const rawConfigured = process.env.GEMINI_MODEL?.trim();
+  const configured = rawConfigured === "gemini-3.7-flash" ? "gemini-3.8-flash"
+    : rawConfigured === "gemini-3.5-flash" ? "gemini-3.6-flash"
+    : rawConfigured;
   // A configured model has priority, but the app has independently supported
   // fallbacks. The old default 3.7 is deprecated and isn't used as a default.
   return [...new Set([configured, ...STABLE_MODELS].filter((s): s is string => Boolean(s)))];
