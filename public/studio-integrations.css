@@ -1,0 +1,38 @@
+
+/* Integrated production tools share the approved dark Studio theme. */
+.studio-ai-tool{border:1px solid var(--line);border-radius:14px;background:#20232a;padding:18px;margin:17px 0;display:grid;gap:13px}
+.studio-ai-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center}
+.studio-ai-head strong{font-size:14px;color:var(--text)}
+.studio-ai-head span{font-size:10px;color:var(--muted);letter-spacing:.03em}
+.studio-ai-results{display:grid;gap:10px;margin-top:8px}
+.studio-ai-result{border:1px solid #363a43;border-radius:12px;padding:16px;background:#171a21;display:grid;gap:10px;min-width:0}
+.studio-ai-result h3,.studio-ai-result strong{color:var(--text);font-weight:650;font-size:14px}
+.studio-ai-result p{font-size:12px;line-height:1.65;overflow-wrap:anywhere;color:var(--muted)}
+.studio-ai-result .btn{justify-self:start}
+.studio-integration-status{font-size:12px;color:var(--amber);margin-top:6px}
+.studio-project-actions{flex-wrap:wrap;gap:9px;align-self:flex-start}
+.studio-project-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;flex-wrap:wrap}
+.studio-project-card h3{font-size:16px;color:var(--text)}
+.studio-project-card p{font-size:11px;color:var(--muted);margin-top:6px}
+.studio-project-card .row-buttons{flex-wrap:wrap}
+.studio-audio{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.studio-audio span{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.studio-guide-code{background:#13161d;padding:18px;border:1px solid var(--line);border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:380px;overflow:auto;color:#d7d8de;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;line-height:1.7}
+.integration-note{font-size:11px;color:var(--muted);margin-top:12px}
+#integration-toast{position:fixed;z-index:500;bottom:26px;right:24px;border-radius:12px;border:1px solid #62503c;background:#302821;color:#f8e1c0;font-size:12px;max-width:min(410px,calc(100vw - 32px));padding:13px 16px;box-shadow:0 10px 30px #0007;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .17s,transform .17s}
+#integration-toast.show{opacity:1;transform:translateY(0)}
+#integration-toast[data-kind="error"]{border-color:#8a4343;background:#341f22;color:#f5a9ab}
+.integration-modal{position:fixed;inset:0;z-index:420;display:flex;align-items:center;justify-content:center;padding:20px;background:#050609cc}
+.integration-dialog{width:min(460px,100%);border:1px solid #434650;border-radius:17px;background:#1b1e25;box-shadow:0 25px 95px #0008;padding:25px}
+.integration-dialog h2{font-size:20px;color:var(--text);margin-bottom:12px}
+.integration-dialog p{font-size:12px;line-height:1.8;color:var(--muted)}
+.integration-dialog button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+#ai-beat-actions{flex-wrap:wrap}
+#scripture-ai-result:empty{display:none}
+#page-library .library-results:empty{display:none}
+#page-library .library-results{display:grid;gap:11px}
+#page-workspace>.pagehead{align-items:flex-start;flex-wrap:wrap}
+a.navbtn{color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:12px}
+a.navbtn:hover{color:var(--text);background:var(--panel2)}
+a.navbtn svg{width:19px;height:19px;stroke:currentColor;fill:none}
+@media(max-width:760px){.studio-project-card{padding:15px}.studio-ai-tool{padding:14px}#integration-toast{right:16px;bottom:84px}.studio-project-actions{width:100%}.studio-project-actions .btn{flex:1}}
