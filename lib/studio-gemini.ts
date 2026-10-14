@@ -36,7 +36,8 @@ function errorStatus(error: unknown): number | undefined {
   if (error && typeof error === "object") {
     const candidate = error as Record<string, unknown>;
     for (const field of ["code", "statusCode", "httpStatus"]) {
-      if (typeof candidate[field] === "number") return candidate[field];
+      const statusValue = candidate[field];
+      if (typeof statusValue === "number") return statusValue;
     }
   }
   const message = errorMessage(error);
