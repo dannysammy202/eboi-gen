@@ -36,3 +36,44 @@ a.navbtn{color:var(--muted);text-decoration:none;display:flex;align-items:center
 a.navbtn:hover{color:var(--text);background:var(--panel2)}
 a.navbtn svg{width:19px;height:19px;stroke:currentColor;fill:none}
 @media(max-width:760px){.studio-project-card{padding:15px}.studio-ai-tool{padding:14px}#integration-toast{right:16px;bottom:84px}.studio-project-actions{width:100%}.studio-project-actions .btn{flex:1}}
+
+
+/* Continuous lyric sheet. Old single-section controls remain in DOM for legacy logic
+   but are deliberately removed from the visible writing flow. */
+#tab-lyrics .writer-heading,
+#tab-lyrics #dynamic-lyric-sections,
+#tab-lyrics label[for="lyric-editor"],
+#tab-lyrics #lyric-editor,
+#tab-lyrics .lyric-word-guide,
+#tab-lyrics .writer-bottom {display:none!important}
+.full-song-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:17px;flex-wrap:wrap}
+.full-song-heading h3{font-size:19px;letter-spacing:-.025em;margin:5px 0}
+.full-song-heading p{font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.6}
+.continuous-lyric-sheet{display:grid;gap:17px}
+.full-lyric-section{background:#171a20;border:1px solid #343841;border-radius:15px;padding:20px;min-width:0}
+.full-lyric-section:focus-within{border-color:rgba(232,171,103,.55);box-shadow:0 0 0 2px rgba(232,171,103,.08)}
+.full-lyric-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:13px;flex-wrap:wrap}
+.full-lyric-section-label .eyebrow{font-size:9px}
+.full-lyric-section-label h4{font-size:17px;color:var(--text);margin:5px 0;font-weight:700}
+.full-lyric-section-label small{display:block;color:var(--muted);font-size:11px}
+.full-lyric-section-actions{display:flex;gap:7px;align-items:center}
+.full-lyric-section-actions button{font-size:11px;padding:9px 11px;white-space:nowrap}
+.full-lyric-textarea{display:block;width:100%;min-height:128px;max-height:none;resize:vertical;background:#12151c;border:1px solid #323741;border-radius:11px;color:var(--text);padding:15px 17px;font-size:13px;line-height:1.95;outline:none;font-family:var(--body);overflow-wrap:anywhere;transition:border-color .16s}
+.full-lyric-textarea:focus{border-color:var(--amber)}
+.full-lyric-textarea::placeholder{color:#87888f}
+.full-lyric-counter{margin-top:7px;color:var(--muted);font-size:10px;text-align:right;font-variant-numeric:tabular-nums}
+.music-direction{margin-top:16px}
+.music-direction-help{font-size:11px;color:var(--muted);margin:7px 0 0;line-height:1.6}
+.music-select-key{margin-top:8px;max-width:max-content;padding:8px 13px;font-size:11px}
+.music-key-dialog{max-width:550px}
+.music-key-tabs{display:flex;gap:7px;margin-top:18px}
+.music-key-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.music-key-choice{border-radius:9px;border:1px solid var(--line);background:#20232b;color:var(--text);padding:12px 5px;font:inherit;font-size:12px;cursor:pointer}
+.music-key-choice:hover,.music-key-choice[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.music-recommendation-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.music-recommendation-top>div{display:grid;gap:5px;border:1px solid #343a43;background:#101319;border-radius:9px;padding:12px}
+.music-recommendation-top small{color:var(--muted);font-size:10px}
+.music-recommendation-top strong{font-size:19px;color:var(--amber)}
+.music-recommendation-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:5px}
+.music-recommendation-buttons .btn{white-space:nowrap}
+@media(max-width:760px){.full-lyric-section{padding:14px}.full-lyric-section-head{flex-direction:column}.full-lyric-textarea{padding:12px;font-size:13px}.music-key-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.music-recommendation-buttons .btn{flex:1 1 45%}.full-song-heading h3{font-size:17px}}

@@ -241,6 +241,8 @@
 <div class="writer-layout">
  <div class="surface writer-main">
   <div class="writer-heading"><div><h3 id="section-title">Chorus</h3><small id="section-subtitle">8 bars · Melodic hook</small></div><span class="pill grey">Editable</span></div>
+  <div class="full-song-heading"><div><span class="eyebrow">Full song</span><h3>Your lyrics, in performance order</h3><p>All sections stay visible and editable. Changes save as you write.</p></div><span class="pill grey" id="full-song-count">0 sections</span></div>
+  <div class="continuous-lyric-sheet" id="full-lyric-sheet" aria-label="Full song lyrics"></div>
   <div class="section-chips" aria-label="Choose lyric section" id="dynamic-lyric-sections"></div>
   <label class="sr-only" for="lyric-editor">Edit lyrics for the selected song section</label>
   <textarea class="lyric-editor" id="lyric-editor" spellcheck="true"></textarea>
@@ -472,7 +474,7 @@
   const tempo=document.getElementById('idea-bpm')?.value||'136';
   const arrangement=window.eboiStructureBrief?.()||'Custom arrangement';
   const txt=['EBOI STUDIO | PRODUCTION DESIGN BRIEF','',
-   'Project: '+title,'Artist: Eboi','Style: Kingdom Melodics','BPM: '+tempo,'Key: F minor',
+   'Project: '+title,'Artist: Eboi','Style: Kingdom Melodics','BPM: '+tempo,'Key: '+(document.getElementById('studio-song-key')?.value||'F minor'),
    'Song arrangement: '+arrangement,'',
    'BEAT DIRECTION',store.beat||'Original melodic trap direction to be developed','',
    'SCRIPTURE-LED CONCEPT (WHEN SELECTED)','Theme: Trusting God during difficult times','Reference: Psalm 23:4','',
@@ -536,7 +538,35 @@ function syncSongStructure(){
  renderLyricSections();renderCompositionDirector();renderBeatDirector();renderVocalSession();syncWorkspaceMetadata();window.eboiStructureBrief=()=>textSummary+' / '+duration;window.eboiStructure=()=>({sections:lines,estimatedDuration:duration,bpm:bpm()});
 }
 function lyricInfo(name){const type=sectionType(name),bars=nBars(name);if(type==='hook')return [pretty(name),bars+' bars · Melodic hook','Smooth, repeated melody','Keep this hook clear. Repeat the main idea with natural melody and space for harmonies.'];if(type==='verse')return [pretty(name),bars+' bars · Rhythmic storytelling','Confident, rhythmically varied','Develop your story within the chosen length. Change cadence between lines where it supports the message.'];return [pretty(name),bars+' bars · '+(type==='intro'?'Opening passage':type==='bridge'?'Contrast section':'Closing passage'),type==='intro'?'Set the atmosphere':type==='bridge'?'Emotional contrast':'Leave a lasting feeling','Keep this section concise and consistent with the song message.']}
-function renderLyricSections(){const wrap=el('dynamic-lyric-sections');wrap.replaceChildren();const ids=fullOrder().filter((id,i,a)=>a.indexOf(id)===i);if(!ids.includes(section)){section=ids.find(id=>id.startsWith('hook'))||ids[0]};for(const id of ids){const b=document.createElement('button');b.className='section-chip'+(section===id?' active':'');b.dataset.lyric=id;b.textContent=pretty(id);b.addEventListener('click',()=>loadSection(id));wrap.append(b)};if(el('lyric-editor')&&el('section-title'))loadSection(section)}
+function renderFullLyricSheet(){
+ const wrap=el('full-lyric-sheet');if(!wrap)return;
+ const ids=fullOrder();wrap.replaceChildren();
+ el('full-song-count').textContent=ids.length+' sections';
+ for(const id of ids){
+  const item=document.createElement('section');item.className='full-lyric-section';item.dataset.songSection=id;
+  const head=document.createElement('div');head.className='full-lyric-section-head';
+  const copy=document.createElement('div');copy.className='full-lyric-section-label';
+  const kicker=document.createElement('span');kicker.className='eyebrow';kicker.textContent='SECTION '+String(ids.indexOf(id)+1).padStart(2,'0');
+  const h=document.createElement('h4');h.textContent=pretty(id);
+  const description=document.createElement('small');description.textContent=nBars(id)+' bars · '+dValue(id,'delivery')+' · ~'+timeFmt(sectionSec(nBars(id)));
+  copy.append(kicker,h,description);
+  const actions=document.createElement('div');actions.className='full-lyric-section-actions';
+  const generate=document.createElement('button');generate.type='button';generate.className='btn ghost';generate.textContent='Generate section';generate.addEventListener('click',()=>window.eboiGenerateLyrics?.(id));
+  actions.append(generate);head.append(copy,actions);
+  const field=document.createElement('textarea');field.className='full-lyric-textarea';field.dataset.section=id;field.setAttribute('aria-label',pretty(id)+' lyrics');field.spellcheck=true;field.rows=4;
+  const fallback=id.startsWith('hook')&&id!=='hook1'?'Use Hook 1 as a starting point or write a different repeat.':'Write your lyrics for this section.';
+  field.placeholder=fallback;
+  field.value=db.lyrics[id]??(id.startsWith('hook')&&id!=='hook1'?db.lyrics.hook1||'':'');
+  const counter=document.createElement('div');counter.className='full-lyric-counter';
+  const height=()=>{field.style.height='auto';field.style.height=Math.max(126,field.scrollHeight+6)+'px';const words=(field.value.trim().match(/\S+/g)||[]).length;counter.textContent=words+' words · '+field.value.split('\n').filter(Boolean).length+' lines · '+nBars(id)+' bars'};
+  field.addEventListener('focus',()=>{if(section!==id)loadSection(id)});
+  field.addEventListener('input',()=>{db.lyrics[id]=field.value;save();height();el('lyric-savehint').textContent='Saved in this browser';el('lyrics-state').textContent='Edited draft';if(section===id){el('lyric-editor').value=field.value;updateCount();}});
+  item.append(head,field,counter);wrap.append(item);height();
+ }
+}
+window.eboiFullLyrics=()=>fullOrder().map(id=>({id,title:pretty(id),bars:nBars(id),lyrics:db.lyrics[id]??(id.startsWith('hook')&&id!=='hook1'?db.lyrics.hook1||'':'')}));
+window.eboiApplyGeneratedLyrics=(sections)=>{for(const item of sections){if(!fullOrder().includes(item.id))continue;db.lyrics[item.id]=String(item.lyrics||'');}save();renderFullLyricSheet();loadSection(section)};
+function renderLyricSections(){const wrap=el('dynamic-lyric-sections');wrap.replaceChildren();const ids=fullOrder().filter((id,i,a)=>a.indexOf(id)===i);if(!ids.includes(section)){section=ids.find(id=>id.startsWith('hook'))||ids[0]};for(const id of ids){const b=document.createElement('button');b.className='section-chip'+(section===id?' active':'');b.dataset.lyric=id;b.textContent=pretty(id);b.addEventListener('click',()=>loadSection(id));wrap.append(b)};if(el('lyric-editor')&&el('section-title'))loadSection(section);renderFullLyricSheet()}
 for(const b of document.querySelectorAll('[data-count]'))b.addEventListener('click',()=>{const k=b.dataset.count;const v=Math.max(1,Math.min(k==='verses'?6:8,song[k]+Number(b.dataset.delta)));song[k]=v;song.order=[];save();syncSongStructure()});
 for(const b of document.querySelectorAll('[data-start]'))b.addEventListener('click',()=>{song.start=b.dataset.start;song.order=[];save();syncSongStructure()});
 for(const k of ['intro','outro','bridge'])el('structure-'+k+'-switch').addEventListener('click',()=>{song[k]=!song[k];save();syncSongStructure()});
@@ -556,10 +586,16 @@ function syncWorkspaceMetadata(){
  const tempo=bpm();
  const info=document.querySelectorAll('#page-workspace .workspace-meta span');
  if(info.length>=3)info[2].textContent=tempo+' BPM';
+ const keyValue=document.getElementById('studio-song-key')?.value?.trim()||'F minor';
+ if(info.length>=4)info[3].textContent=keyValue;
+ const beatKey=document.querySelector('#tab-beat .bpm-big span');if(beatKey)beatKey.textContent='BPM / '+keyValue;
+ const prodKey=document.querySelector('#tab-production .mix-master span:last-child');if(prodKey)prodKey.textContent=keyValue;
+ document.querySelectorAll('#page-workspace .specrow, #tab-production .specrow').forEach(row=>{if(row.querySelector('span')?.textContent?.includes('Key'))row.querySelector('strong').textContent=keyValue;});
+
  const beatTempo=document.querySelector('#tab-beat .bpm-big strong');if(beatTempo)beatTempo.textContent=tempo;
  const mixTempo=document.querySelector('#tab-production .mix-master strong');if(mixTempo)mixTempo.textContent=tempo+' BPM';
  const rows=document.querySelectorAll('#page-workspace .workside .detail');
- rows.forEach(row=>{if(row.querySelector('span')?.textContent==='Tempo')row.querySelector('strong').textContent=tempo+' BPM'});
+ rows.forEach(row=>{if(row.querySelector('span')?.textContent==='Tempo')row.querySelector('strong').textContent=tempo+' BPM';if(row.querySelector('span')?.textContent==='Key')row.querySelector('strong').textContent=keyValue});
 }
 /* B04 Studio composition and production directors. Design-only, no AI calls. */
 db.director={delivery:{},phrasing:{},intent:{},energy:{},...(db.director||{})};
@@ -619,7 +655,7 @@ function fullWritingBrief(){
  'Song: '+songTitle,'Artist: Eboi / Kingdom Melodics','Theme: '+theme,
  'Scripture reference (optional): '+(el('verse-ref')?.value.trim()||'Psalm 23:4'),
  'Sound: original melodic trap with smooth and energetic vocal dynamics',
- 'BPM: '+bpm(),'Key: F minor','Meter: 4/4',
+ 'BPM: '+bpm(),'Key: '+(document.getElementById('studio-song-key')?.value||'F minor'),'Meter: 4/4',
  'Estimated length: '+timeFmt(sectionSec(ids.reduce((a,id)=>a+nBars(id),0))),
  '\nCREATIVE RULES','Keep lyrics original and conversational, with natural Nigerian expressions when appropriate. Maintain the verse\'s biblical meaning without forcing quotations. Keep rhythmic delivery realistic for the number of bars. Do not imitate an existing artist.',
  '\nSONG SECTIONS',...ids.map((id,i)=>'\n'+String(i+1).padStart(2,'0')+'. '+makeSectionBrief(id)),
@@ -635,7 +671,7 @@ function renderBeatDirector(){
  for(const energy of ['Low','Lift','Drive']){const b=document.createElement('button');b.type='button';b.textContent=energy;const is=dValue(id,'energy')===energy;b.classList.toggle('selected',is);b.setAttribute('aria-pressed',String(is));b.addEventListener('click',()=>{director.energy[id]=energy;save();renderBeatDirector()});ctl.append(b)}row.append(label,desc,ctl);list.append(row)});
  el('beat-director-timing').textContent=ids.reduce((a,id)=>a+nBars(id),0)+' bars · '+bpm()+' BPM · ~'+timeFmt(sectionSec(ids.reduce((a,id)=>a+nBars(id),0)));
 }
-function makeBeatBrief(){const ids=fullOrder();return ['EBOI STUDIO / ORIGINAL PRODUCER BRIEF','Genre: atmospheric melodic trap','Tempo: '+bpm()+' BPM','Key: F minor','Meter: 4/4','Progression: Fm - Db - Ab - Eb','Core sound: hypnotic synths, understated plucks, warm atmospheric pads, controlled sliding 808 bass, crisp snare and detailed hi-hats. Leave space for a natural Nigerian male vocal.','\nARRANGEMENT BY SECTION',...ids.map((id,i)=>String(i+1).padStart(2,'0')+'. '+pretty(id)+' | '+nBars(id)+' bars | '+dValue(id,'energy')+' energy | '+beatEnergyGuidance(id)+' | '+dValue(id,'delivery')+' vocal'), '\nProduce original instrumental ideas. Do not reproduce any existing track.','Total approximate length: '+timeFmt(sectionSec(ids.reduce((a,id)=>a+nBars(id),0)))].join('\n')}
+function makeBeatBrief(){const ids=fullOrder();return ['EBOI STUDIO / ORIGINAL PRODUCER BRIEF','Genre: atmospheric melodic trap','Tempo: '+bpm()+' BPM','Key: '+(document.getElementById('studio-song-key')?.value||'F minor'),'Meter: 4/4','Progression: Fm - Db - Ab - Eb','Core sound: hypnotic synths, understated plucks, warm atmospheric pads, controlled sliding 808 bass, crisp snare and detailed hi-hats. Leave space for a natural Nigerian male vocal.','\nARRANGEMENT BY SECTION',...ids.map((id,i)=>String(i+1).padStart(2,'0')+'. '+pretty(id)+' | '+nBars(id)+' bars | '+dValue(id,'energy')+' energy | '+beatEnergyGuidance(id)+' | '+dValue(id,'delivery')+' vocal'), '\nProduce original instrumental ideas. Do not reproduce any existing track.','Total approximate length: '+timeFmt(sectionSec(ids.reduce((a,id)=>a+nBars(id),0)))].join('\n')}
 function textModal(title,kicker,txt){
  const wrap=document.createElement('div');
  const intro=document.createElement('p');intro.textContent='A production-ready writing brief based on your current song structure. Preview only. No AI request has been sent.';
@@ -711,7 +747,7 @@ function renderVocalSession(){
  renderLayerPlan();renderMixRoom();
 }
 function buildSessionSheet(){const ids=fullOrder();const notes=el('vocal-notes').value.trim();const title=el('idea-title')?.value.trim()||'Valley Walk';return [
- 'EBOI STUDIO | CREATIVE PRODUCTION BRIEF FOR BANDLAB','Artist: '+(el('artist-name')?.value.trim()||'Eboi'),'Project: '+title,'Style: Kingdom Melodics / original melodic trap','BPM: '+bpm(),'Key: F minor','Meter: 4/4','Song length (estimated): '+timeFmt(sectionSec(ids.reduce((a,id)=>a+nBars(id),0))),
+ 'EBOI STUDIO | CREATIVE PRODUCTION BRIEF FOR BANDLAB','Artist: '+(el('artist-name')?.value.trim()||'Eboi'),'Project: '+title,'Style: Kingdom Melodics / original melodic trap','BPM: '+bpm(),'Key: '+(document.getElementById('studio-song-key')?.value||'F minor'),'Meter: 4/4','Song length (estimated): '+timeFmt(sectionSec(ids.reduce((a,id)=>a+nBars(id),0))),
  '\nSONG STRUCTURE AND VOCAL DIRECTION',...ids.map((id,i)=>{const fx=vocalFx(id);const verse=typeof db.lyrics[id]==='string'?db.lyrics[id]:id.startsWith('hook')?db.lyrics.hook1||'':'';return '\n'+String(i+1).padStart(2,'0')+'. '+pretty(id)+' | '+nBars(id)+' bars | '+dValue(id,'delivery')+' | '+dValue(id,'energy')+' beat energy\n'+'Timing: ~'+timeFmt(sectionSec(nBars(id)))+' | Phrasing: '+lyricLineTarget(id)+' lines\n'+'Message: '+dValue(id,'intent')+'\n'+'Performance notes: '+(vocalState.sectionNotes[id]||'None')+'\n'+'Planned vocal layers: '+getLayers(id).map(l=>layerCatalog.find(x=>x.id===l)?.title||l).join(', ')+'\n'+'Suggested BandLab treatment: pitch correction '+fx.correction+', layering '+fx.layer+', ambience '+fx.space+'\n'+'Lyric draft:\n'+(verse||'(No lyrics yet)')+'\n'}) ,
  '\nSUGGESTED BANDLAB TRACKS','01 / Instrumental reference','02 / Main lead vocal','03 / Chorus doubles, if planned','04 / Harmonies, if planned','05 / Ad-libs, if planned','06 / Effects sends, if needed',
  '\nBEAT AND PRODUCTION BRIEF',db.beat||'(No production brief yet)',
@@ -740,13 +776,20 @@ let closeFocus=null;
 function modal({title,kicker='Studio',body='',actions=[]}){const back=el('studio-modal'),actionsEl=el('modal-actions');closeFocus=document.activeElement;el('modal-title').textContent=title;el('modal-kicker').textContent=kicker;el('modal-body').replaceChildren();if(typeof body==='string'){const p=document.createElement('p');p.textContent=body;el('modal-body').append(p)}else el('modal-body').append(body);actionsEl.replaceChildren();actions.forEach(a=>{const b=document.createElement('button');b.className='btn '+(a.primary?'primary':'ghost');b.textContent=a.label;b.addEventListener('click',()=>{a.click?.();hideModal()});actionsEl.append(b)});back.hidden=false;el('modal-close').focus()}
 function hideModal(){el('studio-modal').hidden=true;closeFocus?.focus()}
 el('modal-close').addEventListener('click',hideModal);el('studio-modal').addEventListener('pointerdown',e=>{if(e.target===el('studio-modal'))hideModal()});document.addEventListener('keydown',e=>{if(el('studio-modal').hidden)return;if(e.key==='Escape'){e.preventDefault();hideModal()}if(e.key==='Tab'){const focus=[...el('studio-modal').querySelectorAll('button:not(:disabled),input,textarea')];if(!focus.length)return;const first=focus[0],last=focus.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
-el('save-lyrics-v2').addEventListener('click',()=>{db.versions.unshift({section,date:new Date().toLocaleString('en-GB'),text:db.lyrics[section]});db.versions=db.versions.slice(0,12);save();el('lyrics-state').textContent='Version saved';toast('Lyric version saved in this browser')});
-el('lyric-copy').addEventListener('click',()=>copyText(el('lyric-editor').value));
+el('save-lyrics-v2').addEventListener('click',()=>{const all=Object.fromEntries(fullOrder().map(id=>[id,db.lyrics[id]??(id.startsWith('hook')?db.lyrics.hook1||'':'')]));db.versions.unshift({section:'full',date:new Date().toLocaleString('en-GB'),text:fullOrder().map(id=>'['+pretty(id)+']\n'+all[id]).join('\n\n'),sections:all});db.versions=db.versions.slice(0,12);save();el('lyrics-state').textContent='Version saved';toast('Full song version saved in this browser')});
+el('lyric-copy').addEventListener('click',()=>copyText(window.eboiFullLyrics().map(x=>'['+x.title+']\n'+x.lyrics).join('\n\n')));
 el('lyric-ideas').addEventListener('click',()=>{const wrap=document.createElement('div');[{t:'Tighten the hook',d:'Keep the central phrase and simplify supporting lines.'},{t:'Increase imagery',d:'Introduce one specific detail from the character’s situation.'},{t:'Change cadence',d:'Write two short punchy lines before a longer melodic phrase.'}].forEach(x=>{const row=document.createElement('div');row.className='modal-option';row.innerHTML='<strong></strong><small></small>';row.children[0].textContent=x.t;row.children[1].textContent=x.d;wrap.append(row)});modal({title:'Writing prompts',kicker:'Lyric guidance',body:wrap,actions:[{label:'Close'}]})});
-el('lyric-versions').addEventListener('click',()=>{const wrap=document.createElement('div');if(!db.versions.length){wrap.textContent='No saved versions yet. Select Save version after editing a section.'}db.versions.forEach((v,i)=>{const b=document.createElement('button');b.className='modal-option';b.innerHTML='<strong></strong><small></small>';b.children[0].textContent=pretty(v.section);b.children[1].textContent=v.date+' · '+(v.text.trim().match(/\S+/g)||[]).length+' words';b.addEventListener('click',()=>{modal({title:'Restore this version?',kicker:'Version history',body:'This replaces your current '+(pretty(v.section))+' draft in this browser.',actions:[{label:'Cancel'},{label:'Restore version',primary:true,click:()=>{db.lyrics[v.section]=v.text;save();loadSection(v.section);toast('Version restored')}}]})});wrap.append(b)});modal({title:'Lyric versions',kicker:'Saved drafts',body:wrap,actions:[{label:'Close'}]})});
+el('lyric-versions').addEventListener('click',()=>{
+ const wrap=document.createElement('div');if(!db.versions.length){wrap.textContent='No saved versions yet. Choose Save version to retain the entire song.'}
+ db.versions.forEach(v=>{const b=document.createElement('button');b.className='modal-option';b.innerHTML='<strong></strong><small></small>';
+ b.children[0].textContent=v.section==='full'?'Full song':pretty(v.section);b.children[1].textContent=v.date+' · '+((v.text||'').trim().match(/\S+/g)||[]).length+' words';
+ b.addEventListener('click',()=>{modal({title:'Restore this version?',kicker:'Version history',body:'Restore the saved '+(v.section==='full'?'full song':'section')+' draft? Current lyrics will be overwritten.',actions:[{label:'Cancel'},{label:'Restore version',primary:true,click:()=>{
+ if(v.section==='full'&&v.sections){for(const [id,text] of Object.entries(v.sections))db.lyrics[id]=text;}else db.lyrics[v.section]=v.text;save();renderLyricSections();toast('Version restored')
+ }}]})});wrap.append(b)});modal({title:'Lyric versions',kicker:'Saved drafts',body:wrap,actions:[{label:'Close'}]})
+});
 const arrPrompts={balanced:'Use a restrained intro, melodic chorus, relaxed verse one and a stronger second verse with faster percussion. Keep all lead melodies original.',smooth:'Use a soft synth atmosphere, minimal drum fills, long melodic tails and controlled 808 movement. Prioritise space for the vocal melody.',energetic:'Use tighter kicks, active hi-hat rolls, sharp transitions and a punchy second verse while keeping the chorus melodic and clear.'};
-const commonBeat='Produce an original melodic trap instrumental at 136 BPM in F minor. Progression: Fm, Db, Ab, Eb. Warm synths, pads, plucks, controlled 808s, crisp snares and clean vocal space. ';
-function setArrange(x,announce=false){db.arrangement=x;document.querySelectorAll('[data-arrangement]').forEach(b=>{const active=b.dataset.arrangement===x;b.classList.toggle('active',active);b.querySelector('.arrange-state').textContent=active?'Selected':'Select arrangement'});db.beat=commonBeat+arrPrompts[x];el('beat-prompt').value=db.beat;save();if(announce)toast('Beat direction updated')}
+const commonBeat=()=> 'Produce an original melodic trap instrumental at '+bpm()+' BPM in '+(el('studio-song-key')?.value||'F minor')+'. Use harmony that fits the selected key. Warm synths, pads, plucks, controlled 808s, crisp snares and clean vocal space. ';
+function setArrange(x,announce=false){db.arrangement=x;document.querySelectorAll('[data-arrangement]').forEach(b=>{const active=b.dataset.arrangement===x;b.classList.toggle('active',active);b.querySelector('.arrange-state').textContent=active?'Selected':'Select arrangement'});db.beat=commonBeat()+arrPrompts[x];el('beat-prompt').value=db.beat;save();if(announce)toast('Beat direction updated')}
 document.querySelectorAll('[data-arrangement]').forEach(b=>b.addEventListener('click',()=>setArrange(b.dataset.arrangement,true)));const userBeat=db.beat;setArrange(db.arrangement);db.beat=userBeat;el('beat-prompt').value=userBeat;save();
 el('beat-prompt').addEventListener('input',e=>{db.beat=e.target.value;save()});el('copy-beat').addEventListener('click',()=>copyText(el('beat-prompt').value+'\n\n'+el('beat-structure-notes').textContent));
 // All checklists use fully styled, accessible in-app checkboxes, not browser-native visuals.
