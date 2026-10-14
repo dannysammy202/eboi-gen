@@ -171,6 +171,10 @@ function addScriptureDirection(){
  const exit=$("#concept-section [data-page='structure']");
  exit?.addEventListener("click",(event)=>{if(!applyScriptureSong()){event.preventDefault();event.stopImmediatePropagation();}},true);
  $("#concept-section").hidden=true;
+ const clearAnalysis=()=>{scriptureConcept=null;$("#concept-section").hidden=true;const aside=$("#page-scripture .asidecard");if(aside)aside.hidden=true;$("#scripture-ai-result")?.replaceChildren();};
+ $("#theme-text")?.addEventListener("input",clearAnalysis);
+ $("#verse-ref")?.addEventListener("input",clearAnalysis);
+ $("[data-smode]").forEach(el=>el.addEventListener("click",clearAnalysis));
  recommend.addEventListener("click",async()=>{
   const verse=$(".scripturemode [data-smode='verse']")?.classList.contains("active");
   const text=verse?$("#verse-ref")?.value.trim():$("#theme-text")?.value.trim();
@@ -210,6 +214,7 @@ function addScriptureAI(){
   const payload={mode:verse?"verse":"theme",reference:$("#verse-ref")?.value,theme:$("#theme-text")?.value};
   if(!(verse?payload.reference:payload.theme)?.trim()){show("Enter a Scripture reference or song theme.","error");return}
   loadButton(primary,true);
+  scriptureConcept=null;$("#concept-section").hidden=true;if(aside)aside.hidden=true;out.replaceChildren();
   try{
    const d=await request("/api/studio/scripture",payload);scriptureConcept=d;out.replaceChildren();
    const card=document.createElement("article");card.className="studio-ai-result";
@@ -219,7 +224,7 @@ function addScriptureAI(){
    const use=button("Use this song concept",()=>{
      if(!applyScriptureSong())return;
      show("Scripture-led concept, tempo and key added to your song.");
-     go("structure");
+     $("#concept-section [data-page='structure']")?.click();
    },"btn primary");
    card.append(h,context,concept,use);out.append(card);
    const proposed=$("#concept-section");if(proposed){
@@ -234,7 +239,8 @@ function addScriptureAI(){
    const attribution=$("#page-scripture .verse small");
    if(attribution)attribution.textContent="Song theme · Not a Bible quotation";
    if(aside){
-    const descriptions=$$("p",aside);if(descriptions[0])descriptions[0].textContent=d.insight;
+    aside.hidden=false;
+    const descriptions=$("p",aside);if(descriptions[0])descriptions[0].textContent=d.insight;
     if(descriptions[1])descriptions[1].textContent=d.concept;
    }
    syncScriptureSummary();
@@ -259,7 +265,7 @@ function addProjects(){const heading=$("#page-workspace .pagehead");if(!heading)
 function initialise(){addSongKey();addMusicDirection();addScriptureDirection();addLyricsAI();addThemeAI();addScriptureAI();addBeatAI();addProjects();
  const classic=document.createElement("a");classic.className="navbtn";classic.href="/classic";classic.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24"><use href="#i-spark"></use></svg><span class="navtext">Classic AI tools</span>';$(".sidebar .navsection:last-of-type")?.append(classic);
  const stage=$("#page-dashboard .hero");if(stage){const badge=$(".eyebrow",stage);if(badge)badge.textContent="Your music production house";}
- const form=read("eboi-next-form",null)||JSON.parse(sessionStorage.getItem("eboi-next-project")||"null");if(form){sessionStorage.removeItem("eboi-next-project");if($("#idea-title"))$("#idea-title").value=form.title||"";if($("#idea-about"))$("#idea-about").value=form.about||"";if($("#idea-bpm"))$("#idea-bpm").value=form.bpm||"136";if($("#studio-song-key"))$("#studio-song-key").value=form.key||"F minor";$("#idea-bpm")?.dispatchEvent(new Event("input",{bubbles:true}));$("#idea-title")?.dispatchEvent(new Event("input",{bubbles:true}));syncKeyOnScreen();if(form.sound){const picker=$("#idea-sound");picker?.click();const match=$("#idea-sound-options [role=option]").find(x=>x.dataset.value?.toLowerCase()===form.sound.toLowerCase());match?.click()}}
+ const form=read("eboi-next-form",null)||JSON.parse(sessionStorage.getItem("eboi-next-project")||"null");if(form){sessionStorage.removeItem("eboi-next-project");if($("#idea-title"))$("#idea-title").value=form.title||"";if($("#idea-about"))$("#idea-about").value=form.about||"";if($("#idea-bpm"))$("#idea-bpm").value=form.bpm||"136";if($("#studio-song-key"))$("#studio-song-key").value=form.key||"F minor";$("#idea-bpm")?.dispatchEvent(new Event("input",{bubbles:true}));$("#idea-title")?.dispatchEvent(new Event("input",{bubbles:true}));syncKeyOnScreen();if($("#scripture-key"))$("#scripture-key").value=$("#studio-song-key")?.value||"F minor";syncScriptureSummary();if(form.sound){const picker=$("#idea-sound");picker?.click();const match=$("#idea-sound-options [role=option]").find(x=>x.dataset.value?.toLowerCase()===form.sound.toLowerCase());match?.click()}}
  const query=new URLSearchParams(location.search),view=query.get("view");if(view==="workspace")go("workspace");else if(view==="create"){$('[data-method="idea"]')?.click();go("create")}else if(view==="library")go("library");
  let latest="";setInterval(()=>{const id=localStorage.getItem(activeKey);if(!id)return;const record=snapshot(),str=JSON.stringify(record.db)+"|"+JSON.stringify(record.form);if(latest===str)return;latest=str;saveProject(false,true)},4000);
 }
