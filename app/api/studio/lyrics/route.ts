@@ -45,7 +45,6 @@ export async function POST(request: Request) {
       ai,
       prompt,
       maxOutputTokens: 8192,
-      temperature: 0.85,
       validate: (parsed: unknown): Array<{ id: string; lyrics: string }> | null => {
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
         const all = (parsed as { sections?: unknown }).sections;
