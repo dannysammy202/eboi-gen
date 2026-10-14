@@ -77,3 +77,22 @@ a.navbtn svg{width:19px;height:19px;stroke:currentColor;fill:none}
 .music-recommendation-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:5px}
 .music-recommendation-buttons .btn{white-space:nowrap}
 @media(max-width:760px){.full-lyric-section{padding:14px}.full-lyric-section-head{flex-direction:column}.full-lyric-textarea{padding:12px;font-size:13px}.music-key-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.music-recommendation-buttons .btn{flex:1 1 45%}.full-song-heading h3{font-size:17px}}
+
+/* Keep Scripture to Song in sync with the Idea route, including on phones. */
+#concept-section[hidden],#page-scripture .asidecard[hidden]{display:none!important}
+.scripture-music-fields{margin-top:3px}
+.scripture-music-fields .field{min-width:0}
+.scripture-music-fields input{width:100%;min-width:0}
+.scripture-music-fields .music-select-key{margin-top:9px}
+.scripture-direction{margin:6px 0 12px}
+.scripture-direction .music-recommendation .row-buttons{gap:8px}
+#scripture-recommendation-result:empty{display:none}
+@media(max-width:760px){
+ .scripture-music-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+ .scripture-direction{padding:14px;margin-top:5px}
+ .scripture-music-fields .music-select-key{width:100%;max-width:none}
+}
+@media(max-width:420px){
+ .scripture-music-fields{grid-template-columns:1fr;gap:13px}
+ .scripture-music-fields .music-select-key{width:100%;max-width:none}
+}
