@@ -63,7 +63,6 @@ export async function generateStudioJson<T>(args: {
   ai: GoogleGenAI;
   prompt: string;
   maxOutputTokens: number;
-  temperature?: number;
   validate: (parsed: unknown) => T | null;
 }): Promise<{ value: T; model: string }> {
   let encounteredBusy = false;
@@ -79,7 +78,6 @@ export async function generateStudioJson<T>(args: {
           config: {
             responseMimeType: "application/json",
             maxOutputTokens: args.maxOutputTokens,
-            ...(args.temperature === undefined ? {} : { temperature: args.temperature }),
           },
         });
         const raw = response.text?.trim();
